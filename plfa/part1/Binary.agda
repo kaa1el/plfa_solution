@@ -1,8 +1,8 @@
-module Binary where
+module plfa.part1.Binary where
 
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂; sym)
-open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _∸_; _^_)
-open import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym)
+open import Data.Nat using (ℕ; zero; suc; _+_; _*_)
+open import Data.Nat.Properties using (+-assoc; +-comm; +-suc; +-identityʳ)
 
 data Bin : Set where
     ⟨⟩ : Bin
@@ -72,7 +72,7 @@ badd (x O) (y O) = (badd x y) O
 badd (x O) (y I) = (badd x y) I
 badd (x I) ⟨⟩ = x I
 badd (x I) (y O) = (badd x y) I
-badd (x I) (y I) = (badd (bsuc x) y) O -- carry
+badd (x I) (y I) = (bsuc (badd x y)) O -- carry
 
 _ : badd (⟨⟩ I O I I) (⟨⟩ I O I I) ≡ ⟨⟩ I O I I O
 _ = refl
@@ -83,21 +83,16 @@ bzero = ⟨⟩ O
 bone : Bin
 bone = ⟨⟩ I
 
-badd-bone : (x : Bin) → badd bone x ≡ bsuc x
-badd-bone ⟨⟩ = refl
-badd-bone (x O) = refl
-badd-bone (x I) rewrite badd-bone x = refl
-
-badd-bsuc : (x y : Bin) → badd (bsuc x) y ≡ bsuc (badd x y)
-badd-bsuc ⟨⟩ ⟨⟩ = refl
-badd-bsuc ⟨⟩ (y O) = refl
-badd-bsuc ⟨⟩ (y I) rewrite badd-bone y = refl
-badd-bsuc (x O) ⟨⟩ = refl
-badd-bsuc (x O) (y O) = refl
-badd-bsuc (x O) (y I) rewrite badd-bsuc x y = refl
-badd-bsuc (x I) ⟨⟩ = refl
-badd-bsuc (x I) (y O) rewrite badd-bsuc x y = refl
-badd-bsuc (x I) (y I) = refl
+badd-bsuc-l : (x y : Bin) → badd (bsuc x) y ≡ bsuc (badd x y)
+badd-bsuc-l ⟨⟩ ⟨⟩ = refl
+badd-bsuc-l ⟨⟩ (y O) = refl
+badd-bsuc-l ⟨⟩ (y I) = refl
+badd-bsuc-l (x O) ⟨⟩ = refl
+badd-bsuc-l (x O) (y O) = refl
+badd-bsuc-l (x O) (y I) = refl
+badd-bsuc-l (x I) ⟨⟩ = refl
+badd-bsuc-l (x I) (y O) rewrite badd-bsuc-l x y = refl
+badd-bsuc-l (x I) (y I) rewrite badd-bsuc-l x y = refl
 
 badd-comm : (x y : Bin) → badd x y ≡ badd y x
 badd-comm ⟨⟩ ⟨⟩ = refl
@@ -108,28 +103,31 @@ badd-comm (x O) (y O) rewrite badd-comm x y = refl
 badd-comm (x O) (y I) rewrite badd-comm x y = refl
 badd-comm (x I) ⟨⟩ = refl
 badd-comm (x I) (y O) rewrite badd-comm x y = refl
-badd-comm (x I) (y I) rewrite badd-bsuc x y | badd-bsuc y x | badd-comm x y = refl
+badd-comm (x I) (y I) rewrite badd-comm x y = refl
 
 badd-bsuc-r : (x y : Bin) → badd x (bsuc y) ≡ bsuc (badd x y)
-badd-bsuc-r x y rewrite badd-comm x y | badd-comm x (bsuc y) = badd-bsuc y x
+badd-bsuc-r x y
+    rewrite badd-comm x y
+    | badd-comm x (bsuc y)
+    | badd-bsuc-l y x = refl
 
 badd-bzero-bsuc : (x : Bin) → badd bzero (bsuc x) ≡ bsuc x
 badd-bzero-bsuc ⟨⟩ = refl
 badd-bzero-bsuc (x O) = refl
 badd-bzero-bsuc (x I) = refl
 
-badd-to : (n m : ℕ) → badd (to n) (to m) ≡ to (n + m)
-badd-to zero zero = refl
-badd-to zero (suc m) = badd-bzero-bsuc (to m)
-badd-to (suc n) zero
+to-hom-+' : (n m : ℕ) → to (n + m) ≡ badd (to n) (to m)
+to-hom-+' zero zero = refl
+to-hom-+' zero (suc m) = sym (badd-bzero-bsuc (to m))
+to-hom-+' (suc n) zero
     rewrite badd-comm (bsuc (to n)) bzero
-    | +-identityʳ n
-    | badd-bzero-bsuc (to n) = refl
-badd-to (suc n) (suc m)
-    rewrite badd-bsuc (to n) (bsuc (to m))
+    | badd-bzero-bsuc (to n)
+    | +-identityʳ n = refl
+to-hom-+' (suc n) (suc m)
+    rewrite badd-bsuc-l (to n) (bsuc (to m))
     | badd-bsuc-r (to n) (to m)
-    | badd-to n m
-    | +-suc n m = refl
+    | +-suc n m
+    | to-hom-+' n m = refl
 
 helper : (a b c d : ℕ) → ((a + b) + (c + d)) ≡ ((a + c) + (b + d))
 helper a b c d
@@ -139,24 +137,23 @@ helper a b c d
     | +-assoc c b d
     | sym (+-assoc a c (b + d)) = refl
 
-from-badd : (x y : Bin) → from (badd x y) ≡ from x + from y
-from-badd ⟨⟩ y = refl
-from-badd (x O) ⟨⟩ rewrite +-identityʳ (from x + from x) = refl
-from-badd (x O) (y O)
-    rewrite from-badd x y
+from-hom : (x y : Bin) → from (badd x y) ≡ from x + from y
+from-hom ⟨⟩ y = refl
+from-hom (x O) ⟨⟩ rewrite +-identityʳ (from x + from x) = refl
+from-hom (x O) (y O)
+    rewrite from-hom x y
     | helper (from x) (from y) (from x) (from y) = refl
-from-badd (x O) (y I)
-    rewrite from-badd x y
+from-hom (x O) (y I)
+    rewrite from-hom x y
     | +-suc (from x + from x) (from y + from y)
     | helper (from x) (from y) (from x) (from y) = refl
-from-badd (x I) ⟨⟩ rewrite +-identityʳ (from x + from x) = refl
-from-badd (x I) (y O)
-    rewrite from-badd x y
+from-hom (x I) ⟨⟩ rewrite +-identityʳ (from x + from x) = refl
+from-hom (x I) (y O)
+    rewrite from-hom x y
     | helper (from x) (from y) (from x) (from y) = refl
-from-badd (x I) (y I)
-    rewrite badd-bsuc x y
-    | from-bsuc (badd x y)
-    | from-badd x y
+from-hom (x I) (y I)
+    rewrite from-bsuc (badd x y)
+    | from-hom x y
     | +-suc (from x + from y) (from x + from y)
     | +-suc (from x + from x) (from y + from y)
     | helper (from x) (from y) (from x) (from y) = refl
@@ -187,27 +184,33 @@ can-to : (n : ℕ) → Can (to n)
 can-to zero = justO
 can-to (suc n) = fromOne (one-to n)
 
-can-to-from : (b : Bin) → Can (to (from b))
-can-to-from ⟨⟩ = justO
-can-to-from (b O) = can-to (from b + from b)
-can-to-from (b I) = can-bsuc (can-to (from b + from b))
+badd-bzero : (b : Bin) → Can b → badd bzero b ≡ b
+badd-bzero (⟨⟩ O) justO = refl
+badd-bzero (b O) (fromOne p) = refl
+badd-bzero (b I) (fromOne p) = refl
+
+to-hom-+ : (n m : ℕ) → to (n + m) ≡ badd (to n) (to m)
+to-hom-+ zero m rewrite badd-bzero (to m) (can-to m) = refl
+to-hom-+ (suc n) m
+    rewrite badd-bsuc-l (to n) (to m)
+    | to-hom-+ n m = refl
 
 badd-double : (b : Bin) → One b → badd b b ≡ b O
-badd-double (⟨⟩ I) justI = refl
+badd-double (.⟨⟩ I) justI = refl
 badd-double (b O) (caseO p) rewrite badd-double b p = refl
-badd-double (b I) (caseI p) rewrite badd-bsuc b b | badd-double b p = refl
+badd-double (b I) (caseI p) rewrite badd-double b p = refl
 
-to-from-one : (b : Bin) → One b → to (from b) ≡ b
-to-from-one (⟨⟩ I) justI = refl
-to-from-one (b O) (caseO p)
-    rewrite sym (badd-to (from b) (from b))
-    | to-from-one b p
+one-to-from : (b : Bin) → One b → to (from b) ≡ b
+one-to-from (.⟨⟩ I) justI = refl
+one-to-from (b O) (caseO p)
+    rewrite to-hom-+ (from b) (from b)
+    | one-to-from b p
     | badd-double b p = refl
-to-from-one (b I) (caseI p)
-    rewrite sym (badd-to (from b) (from b))
-    | to-from-one b p
+one-to-from (b I) (caseI p)
+    rewrite to-hom-+ (from b) (from b)
+    | one-to-from b p
     | badd-double b p = refl
 
-to-from-can : (b : Bin) → Can b → to (from b) ≡ b
-to-from-can (⟨⟩ O) justO = refl
-to-from-can b (fromOne p) = to-from-one b p
+can-to-from : (b : Bin) → Can b → to (from b) ≡ b
+can-to-from .(⟨⟩ O) justO = refl
+can-to-from b (fromOne p) = one-to-from b p
