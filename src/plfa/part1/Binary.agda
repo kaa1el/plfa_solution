@@ -185,7 +185,7 @@ can-to zero = justO
 can-to (suc n) = fromOne (one-to n)
 
 badd-bzero : (b : Bin) → Can b → badd bzero b ≡ b
-badd-bzero (⟨⟩ O) justO = refl
+badd-bzero _ justO = refl
 badd-bzero (b O) (fromOne p) = refl
 badd-bzero (b I) (fromOne p) = refl
 
@@ -196,12 +196,12 @@ to-hom-+ (suc n) m
     | to-hom-+ n m = refl
 
 badd-double : (b : Bin) → One b → badd b b ≡ b O
-badd-double (.⟨⟩ I) justI = refl
+badd-double _ justI = refl
 badd-double (b O) (caseO p) rewrite badd-double b p = refl
 badd-double (b I) (caseI p) rewrite badd-double b p = refl
 
 one-to-from : (b : Bin) → One b → to (from b) ≡ b
-one-to-from (.⟨⟩ I) justI = refl
+one-to-from _ justI = refl
 one-to-from (b O) (caseO p)
     rewrite to-hom-+ (from b) (from b)
     | one-to-from b p
@@ -212,5 +212,5 @@ one-to-from (b I) (caseI p)
     | badd-double b p = refl
 
 can-to-from : (b : Bin) → Can b → to (from b) ≡ b
-can-to-from .(⟨⟩ O) justO = refl
+can-to-from _ justO = refl
 can-to-from b (fromOne p) = one-to-from b p
