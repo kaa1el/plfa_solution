@@ -1,11 +1,16 @@
-# plfa_solution
+# PLFA Solution
 
-solution to the exercises from https://plfa.github.io/
+Solution to the exercises from Programming Language Foundations with Agda: https://plfa.github.io/
 
-## table of contents
+Agda version: `2.6.1.1`
 
-### part 1
+## Table of Contents
 
-1. [x] Naturals
-1. [x] Induction
-1. [x] Relations
+### Part 1
+
+- [x] 1. [Naturals](https://plfa.github.io/Naturals/)
+- [x] 2. [Induction](https://plfa.github.io/Induction/)
+- [x] 3. [Relations](https://plfa.github.io/Relations/)
+- [x] 4. [Equality](https://plfa.github.io/Equality/)
+- [x] 5. [Isomorphism](https://plfa.github.io/Isomorphism/)
+- [ ] 6. [Connectives](https://plfa.github.io/Connectives/)
