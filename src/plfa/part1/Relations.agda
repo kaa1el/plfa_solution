@@ -180,3 +180,65 @@ o+e≡o (suc em) en = suc (e+e≡e em en)
 
 o+o≡e : {m n : ℕ} → Odd m → Odd n → Even (m + n)
 o+o≡e (suc {m} em) (suc {n} en) rewrite +-suc m n = suc (suc (e+e≡e em en))
+
+-- Binary Natural Numbers (Continued)
+
+open import plfa.part1.Induction
+    using (Bin; ⟨⟩; _O; _I; bsuc; to; from; badd; bzero; badd-bsuc-l)
+
+data One : Bin → Set where
+    justI : One (⟨⟩ I)
+    caseO : {b : Bin} → One b → One (b O)
+    caseI : {b : Bin} → One b → One (b I)
+
+data Can : Bin → Set where
+    justO : Can (⟨⟩ O)
+    fromOne : {b : Bin} → One b → Can b
+
+one-bsuc : {b : Bin} → One b → One (bsuc b)
+one-bsuc justI = caseO justI
+one-bsuc (caseO p) = caseI p
+one-bsuc (caseI p) = caseO (one-bsuc p)
+
+can-bsuc : {b : Bin} → Can b → Can (bsuc b)
+can-bsuc justO = fromOne justI
+can-bsuc (fromOne p) = fromOne (one-bsuc p)
+
+one-to : (n : ℕ) → One (to (suc n))
+one-to zero = justI
+one-to (suc n) = one-bsuc (one-to n)
+
+can-to : (n : ℕ) → Can (to n)
+can-to zero = justO
+can-to (suc n) = fromOne (one-to n)
+
+badd-bzero : (b : Bin) → Can b → badd bzero b ≡ b
+badd-bzero _ justO = refl
+badd-bzero (b O) (fromOne p) = refl
+badd-bzero (b I) (fromOne p) = refl
+
+to-hom-+ : (n m : ℕ) → to (n + m) ≡ badd (to n) (to m)
+to-hom-+ zero m rewrite badd-bzero (to m) (can-to m) = refl
+to-hom-+ (suc n) m
+    rewrite badd-bsuc-l (to n) (to m)
+    | to-hom-+ n m = refl
+
+badd-double : (b : Bin) → One b → badd b b ≡ b O
+badd-double _ justI = refl
+badd-double (b O) (caseO p) rewrite badd-double b p = refl
+badd-double (b I) (caseI p) rewrite badd-double b p = refl
+
+one-to-from : (b : Bin) → One b → to (from b) ≡ b
+one-to-from _ justI = refl
+one-to-from (b O) (caseO p)
+    rewrite to-hom-+ (from b) (from b)
+    | one-to-from b p
+    | badd-double b p = refl
+one-to-from (b I) (caseI p)
+    rewrite to-hom-+ (from b) (from b)
+    | one-to-from b p
+    | badd-double b p = refl
+
+can-to-from : (b : Bin) → Can b → to (from b) ≡ b
+can-to-from _ justO = refl
+can-to-from b (fromOne p) = one-to-from b p

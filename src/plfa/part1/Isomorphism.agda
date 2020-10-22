@@ -225,14 +225,14 @@ open _⇔_
 ⇔-trans A⇔B B⇔C .to = B⇔C .to ∘ A⇔B .to
 ⇔-trans A⇔B B⇔C .from = A⇔B .from ∘ B⇔C .from
 
-open import plfa.part1.Binary using (Bin; to; from; from-to)
+open import plfa.part1.Induction using (Bin; to; from; from-to)
 
 ℕ≲Bin : ℕ ≲ Bin
 ℕ≲Bin =
     record {
-        to = plfa.part1.Binary.to;
-        from = plfa.part1.Binary.from;
-        from∘to = plfa.part1.Binary.from-to
+        to = plfa.part1.Induction.to;
+        from = plfa.part1.Induction.from;
+        from∘to = plfa.part1.Induction.from-to
     }
 
 -- import Function using (_∘_)
