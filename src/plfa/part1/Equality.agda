@@ -30,6 +30,121 @@ cong-app refl x = refl
 subst : {A : Set} → {x y : A} → (P : A → Set) → x ≡ y → P x → P y
 subst P refl a = a
 
+subst-cong : {A B : Set} → {f : A → B} → (P : B → Set) → {x y : A} → {u : P (f x)} → (e : x ≡ y)
+    → subst (λ x → P (f x)) e u ≡ subst P (cong f e) u
+subst-cong P refl = refl
+
+congd : {A : Set} → {B : A → Set} → (f : (x : A) → B x) → {x y : A} → (e : x ≡ y) → subst B e (f x) ≡ f y
+congd f refl = refl
+
+trans-identity-l : {A : Set} → {x y : A} → (p : x ≡ y) → trans refl p ≡ p
+trans-identity-l refl = refl
+
+trans-identity-r : {A : Set} → {x y : A} → (p : x ≡ y) → trans p refl ≡ p
+trans-identity-r refl = refl
+
+trans-sym-l : {A : Set} → {x y : A} → (p : x ≡ y) → trans (sym p) p ≡ refl
+trans-sym-l refl = refl
+
+trans-sym-r : {A : Set} → {x y : A} → (p : x ≡ y) → trans p (sym p) ≡ refl
+trans-sym-r refl = refl
+
+sym-involution : {A : Set} → {x y : A} → (p : x ≡ y) → sym (sym p) ≡ p
+sym-involution refl = refl
+
+trans-assoc : {A : Set} → {x y z w : A} → (p : x ≡ y) → (q : y ≡ z) → (r : z ≡ w)
+    → trans (trans p q) r ≡ trans p (trans q r)
+trans-assoc refl refl refl = refl
+
+id : {A : Set} → A → A
+id x = x
+
+cong-trans : {A B : Set} → {f : A → B} → {x y z : A} → (p : x ≡ y) → (q : y ≡ z)
+    → cong f (trans p q) ≡ trans (cong f p) (cong f q)
+cong-trans refl refl = refl
+
+cong-sym : {A B : Set} → {f : A → B} → {x y : A} → (p : x ≡ y)
+    → cong f (sym p) ≡ sym (cong f p)
+cong-sym refl = refl
+
+cong-cong : {A B C : Set} → {f : A → B} → {g : B → C} → {x y : A} → (p : x ≡ y)
+    → cong g (cong f p) ≡ cong (λ x → g (f x)) p
+cong-cong refl = refl
+
+cong-id : {A : Set} → {x y : A} → (p : x ≡ y) → cong id p ≡ p
+cong-id refl = refl
+
+homotopy-natural : {A B : Set}
+    → (f g : A → B) → (h : (x : A) → f x ≡ g x)
+    → (x y : A) → (e : x ≡ y)
+    → trans (h x) (cong g e) ≡ trans (cong f e) (h y)
+homotopy-natural f g h x .x refl = trans (trans-identity-r (h x)) (sym (trans-identity-l (h x)))
+
+homotopy-natural-d : {A : Set} → {B : A → Set}
+    → (f g : (x : A) → B x) → (h : (x : A) → f x ≡ g x)
+    → (x y : A) → (e : x ≡ y)
+    → trans (cong (subst B e) (h x)) (congd g e) ≡ trans (congd f e) (h y)
+homotopy-natural-d f g h x .x refl = trans (cong (λ e → trans e refl) (cong-id (h x))) (trans (trans-identity-r (h x)) (sym (trans-identity-l (h x))))
+
+H : {A : Set} → {x : A} → {D : (y : A) → x ≡ y → Set}
+    → D x refl
+    → (y : A) → (e : x ≡ y) → D y e
+H d y refl = d
+
+J : {A : Set} → {C : (x y : A) → x ≡ y → Set}
+    → ((x : A) → C x x refl)
+    → (x y : A) → (e : x ≡ y) → C x y e
+J c x .x refl = c x
+
+record Σ (A : Set) (B : A → Set) : Set where
+    constructor _,_
+    field
+        π₁ : A
+        π₂ : B π₁
+open Σ
+infixr 4 _,_
+
+lift : {A : Set} → {B : A → Set} → {a x : A} → (b : B a)→ (e : a ≡ x) → (a , b) ≡ (x , subst B e b)
+lift {A} {B} {a} {x} b e = J {A} {λ (a x : A) (e : a ≡ x) → (b : B a) → (a , b) ≡ (x , subst B e b)}
+    (λ x b → refl) a x e b
+-- lift b refl = refl
+
+lift-π₁ : {A : Set} → {B : A → Set} → {a x : A} → (b : B a)→ (e : a ≡ x) → cong π₁ (lift {A} {B} b e) ≡ e
+lift-π₁ {A} {B} {a} {x} b e = J {A} {λ (a x : A) (e : a ≡ x) → (b : B a) → cong π₁ (lift {A} {B} b e) ≡ e}
+    (λ x b → refl) a x e b
+-- lift-π₁ b refl = refl
+
+singleton : {A : Set} → (x : A) → Set
+singleton {A} x = Σ A (λ y → x ≡ y)
+
+lift-singleton : {A : Set} → {x y : A} → (e : x ≡ y) → (x , refl {A} {x}) ≡ (y , e)
+lift-singleton {A} {x} {y} e = J {A} {λ (x y : A) (e : x ≡ y) → (x , refl {A} {x}) ≡ (y , e)}
+    (λ x → refl) x y e
+
+H-from-J : {A : Set} → {x : A} → {D : (y : A) → x ≡ y → Set}
+    → D x refl
+    → (y : A) → (e : x ≡ y) → D y e
+H-from-J {A} {x} {D} d y e = subst D′ (lift-singleton e) d where
+    D′ : singleton x → Set
+    D′ w = D (π₁ w) (π₂ w)
+
+H-from-J≡H : {A : Set} → {x : A} → {D : (y : A) → x ≡ y → Set}
+    → (d : D x refl)
+    → (y : A) → (e : x ≡ y)
+    → H-from-J {A} {x} {D} d y e ≡ H {A} {x} {D} d y e
+H-from-J≡H d y refl = refl
+
+J-from-H : {A : Set} → {C : (x y : A) → x ≡ y → Set}
+    → ((x : A) → C x x refl)
+    → (x y : A) → (e : x ≡ y) → C x y e
+J-from-H c x = H (c x)
+
+J-from-H≡J : {A : Set} → {C : (x y : A) → x ≡ y → Set}
+    → (c : (x : A) → C x x refl)
+    → (x y : A) → (e : x ≡ y)
+    → J-from-H {A} {C} c x y e ≡ J {A} {C} c x y e
+J-from-H≡J c x .x refl = refl
+
 -- Chains of Equations
 
 module ≡-Reasoning {A : Set} where

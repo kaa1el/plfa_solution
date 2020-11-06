@@ -2,7 +2,7 @@
 
 Solution to the exercises from Programming Language Foundations with Agda: https://plfa.github.io/
 
-Agda version: `2.6.1.1`
+Agda version: `2.6.1.2`
 
 ## Table of Contents
 
@@ -14,5 +14,9 @@ Agda version: `2.6.1.1`
 - [x] 4. [Equality](https://plfa.github.io/Equality/)
 - [x] 5. [Isomorphism](https://plfa.github.io/Isomorphism/)
 - [x] 6. [Connectives](https://plfa.github.io/Connectives/)
-- [ ] 7. [Negation](https://plfa.github.io/Negation/)
+- [x] 7. [Negation](https://plfa.github.io/Negation/)
 - [ ] 8. [Quantifiers](https://plfa.github.io/Quantifiers/)
+- [ ] 9. [Decidable](https://plfa.github.io/Decidable/)
+- [ ] 10. [Lists](https://plfa.github.io/Lists/)
+
+### Part 2
