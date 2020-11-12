@@ -9,7 +9,7 @@ open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
 open import Data.Maybe
 
 open import plfa.part1.Relations using (_<_; _>_)
-open import plfa.part1.Isomorphism using (_≃_; extensionality; id)
+open import plfa.part1.Isomorphism using (_≅_; extensionality; id)
 open import plfa.part1.Connectives using (→-distrib-+)
 
 ¬_ : Set → Set
@@ -69,9 +69,9 @@ data Trichotomy (m n : ℕ) : Set where
 ... | ≡-case m≡n m≮n m≯n rewrite m≡n = ≡-case refl (λ { (s<s e) → m≮n e }) (λ { (s<s e) → m≯n e })
 ... | >-case m>n m≮n m≢n = >-case (s<s m>n) (λ { (s<s e) → m≮n e }) (λ { refl → m≢n refl })
 
-open _≃_
+open _≅_
 
-+-dual-× : {A B : Set} → ¬ (A + B) ≃ (¬ A) × (¬ B)
++-dual-× : {A B : Set} → ¬ (A + B) ≅ (¬ A) × (¬ B)
 +-dual-× = →-distrib-+
 
 ¬+¬-implies-¬× : {A B : Set} → (¬ A) + (¬ B) → ¬ (A × B)
@@ -201,3 +201,18 @@ module Classical where
 
 ×-implies-¬→¬ : {A B : Set} → A × B → ¬ (A → ¬ B)
 ×-implies-¬→¬ w f = f (proj₁ w) (proj₂ w)
+
+test : {A : Set} → (f g : ⊥ → A) → f ≡ g
+test f g = extensionality λ ()
+
+¬⊥≅⊤ : ¬ ⊥ ≅ ⊤
+¬⊥≅⊤ .to _ = tt
+¬⊥≅⊤ .from _ = λ ()
+¬⊥≅⊤ .from∘to _ = extensionality (λ ())
+¬⊥≅⊤ .to∘from _ = refl
+
+¬⊥≅⊤ : ¬ ⊥ ≅ ⊤
+¬⊥≅⊤ .to _ = tt
+¬⊥≅⊤ .from _ = λ ()
+¬⊥≅⊤ .from∘to _ = extensionality (λ ())
+¬⊥≅⊤ .to∘from _ = refl

@@ -61,37 +61,37 @@ postulate
     ∀-extensionality : {A : Set} → {B : A → Set} → {f g : (x : A) → B x}
         → ((x : A) → f x ≡ g x) → f ≡ g
 
-infix 0 _≃_
+infix 0 _≅_
 
-record _≃_ (A B : Set) : Set where
+record _≅_ (A B : Set) : Set where
     field
         to : A → B
         from : B → A
         from∘to : (x : A) → from (to x) ≡ x
         to∘from : (y : B) → to (from y) ≡ y
 
-open _≃_ -- this opens the fields declared in the record
+open _≅_ -- this opens the fields declared in the record
 
-data _≃′_ (A B : Set) : Set where
-    mk-≃′ : (to : A → B) → (from : B → A)
+data _≅′_ (A B : Set) : Set where
+    mk-≅′ : (to : A → B) → (from : B → A)
         → (from∘to : (x : A) → from (to x) ≡ x)
         → (to∘from : (y : B) → to (from y) ≡ y)
-        → A ≃′ B
+        → A ≅′ B
 
-to′ : {A B : Set} → (A ≃′ B) → (A → B)
-to′ (mk-≃′ f g g∘f f∘g) = f
+to′ : {A B : Set} → (A ≅′ B) → (A → B)
+to′ (mk-≅′ f g g∘f f∘g) = f
 
-from′ : {A B : Set} → (A ≃′ B) → (B → A)
-from′ (mk-≃′ f g g∘f f∘g) = g
+from′ : {A B : Set} → (A ≅′ B) → (B → A)
+from′ (mk-≅′ f g g∘f f∘g) = g
 
-from∘to′ : {A B : Set} → (A≃B : A ≃′ B) → ((x : A) → from′ A≃B (to′ A≃B x) ≡ x)
-from∘to′ (mk-≃′ f g g∘f f∘g) = g∘f
+from∘to′ : {A B : Set} → (A≅B : A ≅′ B) → ((x : A) → from′ A≅B (to′ A≅B x) ≡ x)
+from∘to′ (mk-≅′ f g g∘f f∘g) = g∘f
 
-to∘from′ : {A B : Set} → (A≃B : A ≃′ B) → ((y : B) → to′ A≃B (from′ A≃B y) ≡ y)
-to∘from′ (mk-≃′ f g g∘f f∘g) = f∘g
+to∘from′ : {A B : Set} → (A≅B : A ≅′ B) → ((y : B) → to′ A≅B (from′ A≅B y) ≡ y)
+to∘from′ (mk-≅′ f g g∘f f∘g) = f∘g
 
-≃-refl : {A : Set} → A ≃ A
-≃-refl =
+≅-refl : {A : Set} → A ≅ A
+≅-refl =
     record {
         to = λ {x → x};
         from = λ {y → y};
@@ -99,43 +99,43 @@ to∘from′ (mk-≃′ f g g∘f f∘g) = f∘g
         to∘from = λ {y → refl}
     }
 
-≃-sym : {A B : Set} → A ≃ B → B ≃ A
-≃-sym A≃B =
+≅-sym : {A B : Set} → A ≅ B → B ≅ A
+≅-sym A≅B =
     record {
-        to = from A≃B;
-        from = to A≃B;
-        from∘to = to∘from A≃B;
-        to∘from = from∘to A≃B
+        to = from A≅B;
+        from = to A≅B;
+        from∘to = to∘from A≅B;
+        to∘from = from∘to A≅B
     }
 
-≃-trans : {A B C : Set} → A ≃ B → B ≃ C → A ≃ C
-≃-trans A≃B B≃C =
+≅-trans : {A B C : Set} → A ≅ B → B ≅ C → A ≅ C
+≅-trans A≅B B≅C =
     record {
-        to = to B≃C ∘ to A≃B;
-        from = from A≃B ∘ from B≃C;
-        from∘to = λ x → trans (cong (from A≃B) (from∘to B≃C (to A≃B x))) (from∘to A≃B x);
-        to∘from = λ y → trans (cong (to B≃C) (to∘from A≃B (from B≃C y))) (to∘from B≃C y)
+        to = to B≅C ∘ to A≅B;
+        from = from A≅B ∘ from B≅C;
+        from∘to = λ x → trans (cong (from A≅B) (from∘to B≅C (to A≅B x))) (from∘to A≅B x);
+        to∘from = λ y → trans (cong (to B≅C) (to∘from A≅B (from B≅C y))) (to∘from B≅C y)
     }
 
-module ≃-Reasoning where
+module ≅-Reasoning where
 
-    infix 1 begin≃_
-    infixr 2 _≃⟨⟩_ _≃⟨_⟩_
-    infix 3 _≃∎
+    infix 1 begin≅_
+    infixr 2 _≅⟨⟩_ _≅⟨_⟩_
+    infix 3 _≅∎
 
-    begin≃_ : {A B : Set} → A ≃ B → A ≃ B
-    begin≃ A≃B = A≃B
+    begin≅_ : {A B : Set} → A ≅ B → A ≅ B
+    begin≅ A≅B = A≅B
 
-    _≃⟨⟩_ : (A : Set) → {B : Set} → A ≃ B → A ≃ B
-    A ≃⟨⟩ A≃B = A≃B
+    _≅⟨⟩_ : (A : Set) → {B : Set} → A ≅ B → A ≅ B
+    A ≅⟨⟩ A≅B = A≅B
 
-    _≃⟨_⟩_ : (A : Set) → {B C : Set} → A ≃ B → B ≃ C → A ≃ C
-    A ≃⟨ A≃B ⟩ B≃C = ≃-trans A≃B B≃C
+    _≅⟨_⟩_ : (A : Set) → {B C : Set} → A ≅ B → B ≅ C → A ≅ C
+    A ≅⟨ A≅B ⟩ B≅C = ≅-trans A≅B B≅C
 
-    _≃∎ : (A : Set) → A ≃ A
-    A ≃∎ = ≃-refl
+    _≅∎ : (A : Set) → A ≅ A
+    A ≅∎ = ≅-refl
 
-open ≃-Reasoning
+open ≅-Reasoning
 
 -- Embedding
 
@@ -172,7 +172,7 @@ from∘to ≲-refl x = refl -- can also combine copattern matching with pattern 
 
 ≲-antisym : {A B : Set} → (A≲B : A ≲ B) → (B≲A : B ≲ A)
     → (A≲B .to ≡ B≲A .from) → (A≲B .from ≡ B≲A .to)
-    → A ≃ B
+    → A ≅ B
 ≲-antisym A≲B B≲A to≡from from≡to .to = A≲B .to
 ≲-antisym A≲B B≲A to≡from from≡to .from = A≲B .from
 ≲-antisym A≲B B≲A to≡from from≡to .from∘to = A≲B .from∘to
@@ -201,10 +201,10 @@ module ≲-Reasoning where
 
 open ≲-Reasoning
 
-≃-implies-≲ : {A B : Set} → A ≃ B → A ≲ B
-≃-implies-≲ A≃B .to = A≃B .to
-≃-implies-≲ A≃B .from = A≃B .from
-≃-implies-≲ A≃B .from∘to = A≃B .from∘to
+≅-implies-≲ : {A B : Set} → A ≅ B → A ≲ B
+≅-implies-≲ A≅B .to = A≅B .to
+≅-implies-≲ A≅B .from = A≅B .from
+≅-implies-≲ A≅B .from∘to = A≅B .from∘to
 
 record _⇔_ (A B : Set) : Set where
     field

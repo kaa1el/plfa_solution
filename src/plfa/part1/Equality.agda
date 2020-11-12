@@ -30,8 +30,19 @@ cong-app refl x = refl
 subst : {A : Set} → {x y : A} → (P : A → Set) → x ≡ y → P x → P y
 subst P refl a = a
 
+subst-inv : {A : Set} → {x y : A} → (P : A → Set) → x ≡ y → P y → P x
+subst-inv P refl a = a
+
+subst-trans : {A : Set} → (P : A → Set) → {x y z : A} → {u : P x} → (p : x ≡ y) → (q : y ≡ z)
+    → subst P (trans p q) u ≡ subst P q (subst P p u)
+subst-trans P refl refl = refl
+
+subst-sym : {A : Set} → (P : A → Set) → {x y : A} → {v : P y} → (p : x ≡ y)
+    → subst P (sym p) v ≡ subst-inv P p v
+subst-sym P refl = refl
+
 subst-cong : {A B : Set} → {f : A → B} → (P : B → Set) → {x y : A} → {u : P (f x)} → (e : x ≡ y)
-    → subst (λ x → P (f x)) e u ≡ subst P (cong f e) u
+    → subst P (cong f e) u ≡ subst (λ x → P (f x)) e u
 subst-cong P refl = refl
 
 congd : {A : Set} → {B : A → Set} → (f : (x : A) → B x) → {x y : A} → (e : x ≡ y) → subst B e (f x) ≡ f y
@@ -49,27 +60,30 @@ trans-sym-l refl = refl
 trans-sym-r : {A : Set} → {x y : A} → (p : x ≡ y) → trans p (sym p) ≡ refl
 trans-sym-r refl = refl
 
-sym-involution : {A : Set} → {x y : A} → (p : x ≡ y) → sym (sym p) ≡ p
-sym-involution refl = refl
-
 trans-assoc : {A : Set} → {x y z w : A} → (p : x ≡ y) → (q : y ≡ z) → (r : z ≡ w)
     → trans (trans p q) r ≡ trans p (trans q r)
 trans-assoc refl refl refl = refl
 
-id : {A : Set} → A → A
-id x = x
+trans-cong : {A B : Set} → {f : A → B} → {x y z : A} → (p : x ≡ y) → (q : y ≡ z)
+    → trans (cong f p) (cong f q) ≡ cong f (trans p q)
+trans-cong refl refl = refl
 
-cong-trans : {A B : Set} → {f : A → B} → {x y z : A} → (p : x ≡ y) → (q : y ≡ z)
-    → cong f (trans p q) ≡ trans (cong f p) (cong f q)
-cong-trans refl refl = refl
+sym-trans : {A : Set} → {x y z : A} → (p : x ≡ y) → (q : y ≡ z) → sym (trans p q) ≡ trans (sym q) (sym p)
+sym-trans refl refl = refl
 
-cong-sym : {A B : Set} → {f : A → B} → {x y : A} → (p : x ≡ y)
-    → cong f (sym p) ≡ sym (cong f p)
-cong-sym refl = refl
+sym-involution : {A : Set} → {x y : A} → (p : x ≡ y) → sym (sym p) ≡ p
+sym-involution refl = refl
+
+sym-cong : {A B : Set} → {f : A → B} → {x y : A} → (p : x ≡ y)
+    → sym (cong f p) ≡ cong f (sym p)
+sym-cong refl = refl
 
 cong-cong : {A B C : Set} → {f : A → B} → {g : B → C} → {x y : A} → (p : x ≡ y)
     → cong g (cong f p) ≡ cong (λ x → g (f x)) p
 cong-cong refl = refl
+
+id : {A : Set} → A → A
+id x = x
 
 cong-id : {A : Set} → {x y : A} → (p : x ≡ y) → cong id p ≡ p
 cong-id refl = refl
@@ -85,6 +99,27 @@ homotopy-natural-d : {A : Set} → {B : A → Set}
     → (x y : A) → (e : x ≡ y)
     → trans (cong (subst B e) (h x)) (congd g e) ≡ trans (congd f e) (h y)
 homotopy-natural-d f g h x .x refl = trans (cong (λ e → trans e refl) (cong-id (h x))) (trans (trans-identity-r (h x)) (sym (trans-identity-l (h x))))
+
+record _≅_ (A B : Set) : Set where
+    field
+        to : A → B
+        from : B → A
+        from∘to : (x : A) → from (to x) ≡ x
+        to∘from : (y : B) → to (from y) ≡ y
+open _≅_
+infix 0 _≅_
+
+subst-iso : {A : Set} → {x y : A} → (P : A → Set) → x ≡ y → (P x ≅ P y)
+subst-iso P refl .to = id
+subst-iso P refl .from = id
+subst-iso P refl .from∘to _ = refl
+subst-iso P refl .to∘from _ = refl
+
+-- subst-iso : {A : Set} → {x y : A} → (P : A → Set) → x ≡ y → (P x ≅ P y)
+-- subst-iso P p .to = subst P p
+-- subst-iso P p .from = subst P (sym p)
+-- subst-iso P p .from∘to u = trans (trans (sym (subst-trans P p (sym p))) (cong (λ e → subst P e u) (trans-sym-r p))) refl
+-- subst-iso P p .to∘from v = trans (trans (sym (subst-trans P (sym p) p)) (cong (λ e → subst P e v) (trans-sym-l p))) refl
 
 H : {A : Set} → {x : A} → {D : (y : A) → x ≡ y → Set}
     → D x refl
