@@ -4,10 +4,10 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 open Eq.≡-Reasoning
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
 open import Function using (id; _∘_)
 
-open import plfa.demo.IdentityProperties
+open import plfa.demo.HoTT
 
 curry : {A : Set} → {B : A → Set} → {C : Σ A B → Set}
     → (f : (w : Σ A B) → C w)

@@ -4,7 +4,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; subst)
 open Eq.≡-Reasoning
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
+open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
 open import Data.Sum using (inj₁; inj₂) renaming (_⊎_ to _+_)
 open import Function using (id; _∘_)
 

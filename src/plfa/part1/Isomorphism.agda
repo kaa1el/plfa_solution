@@ -58,7 +58,7 @@ same : _+′_ ≡ _+_
 same = extensionality λ m → extensionality (λ n → same-app m n)
 
 postulate
-    ∀-extensionality : {A : Set} → {B : A → Set} → {f g : (x : A) → B x}
+    Π-extensionality : {A : Set} → {B : A → Set} → {f g : (x : A) → B x}
         → ((x : A) → f x ≡ g x) → f ≡ g
 
 infix 0 _≅_
