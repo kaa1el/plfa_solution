@@ -9,16 +9,6 @@ open import Function using (id; _∘_)
 
 open import plfa.demo.HoTT
 
-curry : {A : Set} → {B : A → Set} → {C : Σ A B → Set}
-    → (f : (w : Σ A B) → C w)
-    → (x : A) → (y : B x) → C (x , y)
-curry f x y = f (x , y)
-
-uncurry : {A : Set} → {B : A → Set} → {C : (x : A) → B x → Set}
-    → (f : (x : A) → (y : B x) → C x y)
-    → (w : Σ A B) → C (proj₁ w) (proj₂ w)
-uncurry f w = f (proj₁ w) (proj₂ w)
-
 ind-ℕ : {P : ℕ → Set} -- standard induction
     → (P zero)
     → ((n : ℕ) → P n → P (suc n))

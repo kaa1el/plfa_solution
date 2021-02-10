@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.part1.Negation where
 
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; sym; trans)
@@ -9,7 +11,7 @@ open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
 open import Data.Maybe
 
 open import plfa.part1.Relations using (_<_; _>_)
-open import plfa.part1.Isomorphism using (_≅_; extensionality; id)
+open import plfa.part1.Isomorphism using (_≅_; extensionality; Π-extensionality; id)
 open import plfa.part1.Connectives using (→-distrib-+)
 
 ¬_ : Set → Set
@@ -208,11 +210,35 @@ test f g = extensionality λ ()
 ¬⊥≅⊤ : ¬ ⊥ ≅ ⊤
 ¬⊥≅⊤ .to _ = tt
 ¬⊥≅⊤ .from _ = λ ()
-¬⊥≅⊤ .from∘to _ = extensionality (λ ())
+¬⊥≅⊤ .from∘to _ = extensionality λ ()
 ¬⊥≅⊤ .to∘from _ = refl
 
-¬⊥≅⊤ : ¬ ⊥ ≅ ⊤
-¬⊥≅⊤ .to _ = tt
-¬⊥≅⊤ .from _ = λ ()
-¬⊥≅⊤ .from∘to _ = extensionality (λ ())
-¬⊥≅⊤ .to∘from _ = refl
+¬⊤≅⊥ : ¬ ⊤ ≅ ⊥
+¬⊤≅⊥ .to f = f tt
+¬⊤≅⊥ .from = ⊥-elim
+¬⊤≅⊥ .from∘to f = extensionality λ _ → ⊥-elim (f tt)
+¬⊤≅⊥ .to∘from ()
+
+empty-domain : {A : Set} → (⊥ → A) ≅ ⊤ -- ⊥ is the initial object
+empty-domain .to _ = tt
+empty-domain .from _ = λ ()
+empty-domain .from∘to _ = extensionality λ ()
+empty-domain .to∘from _ = refl
+
+unit-codomain :  {A : Set} → (A → ⊤) ≅ ⊤ -- ⊤ is the terminal object
+unit-codomain .to _ = tt
+unit-codomain .from _ _ = tt
+unit-codomain .from∘to _ = extensionality λ _ → refl
+unit-codomain .to∘from _ = refl
+
+empty-function : {A : ⊥ → Set} → ((x : ⊥) → A x) ≅ ⊤
+empty-function .to _ = tt
+empty-function .from _ = λ ()
+empty-function .from∘to _ = Π-extensionality λ ()
+empty-function .to∘from _ = refl
+
+empty-pair : {A : ⊥ → Set} → Σ ⊥ A ≅ ⊥
+empty-pair .to ()
+empty-pair .from ()
+empty-pair .from∘to ()
+empty-pair .to∘from ()

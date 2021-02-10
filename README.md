@@ -15,7 +15,7 @@ Agda version: `2.6.1.2`
 - [x] 5. [Isomorphism](https://plfa.github.io/Isomorphism/)
 - [x] 6. [Connectives](https://plfa.github.io/Connectives/)
 - [x] 7. [Negation](https://plfa.github.io/Negation/)
-- [ ] 8. [Quantifiers](https://plfa.github.io/Quantifiers/)
+- [x] 8. [Quantifiers](https://plfa.github.io/Quantifiers/)
 - [ ] 9. [Decidable](https://plfa.github.io/Decidable/)
 - [ ] 10. [Lists](https://plfa.github.io/Lists/)
 

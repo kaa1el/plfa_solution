@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.part1.Relations where
 
 import Relation.Binary.PropositionalEquality as Eq
@@ -102,6 +104,11 @@ data Total′ : ℕ → ℕ → Set where -- this is indexed data type, but same
 *-mono-≤ : (m n p q : ℕ) → m ≤ n → p ≤ q → m * p ≤ n * q
 *-mono-≤ m n p q m≤n p≤q = ≤-trans (*-monoˡ-≤ m n p m≤n) (*-monoʳ-≤ n p q p≤q)
 
+_≥_ : ℕ → ℕ → Set
+m ≥ n = n ≤ m
+
+infix 4 _≥_
+
 infix 4 _<_
 
 data _<_ : ℕ → ℕ → Set where
@@ -114,6 +121,8 @@ data _<_ : ℕ → ℕ → Set where
 
 _>_ : ℕ → ℕ → Set
 m > n = n < m
+
+infix 4 _>_
 
 data Trichotomy (m n : ℕ) : Set where
     <-case : m < n → Trichotomy m n
@@ -140,6 +149,13 @@ data Trichotomy (m n : ℕ) : Set where
 
 +-mono-< : (m n p q : ℕ) → m < n → p < q → m + p < n + q
 +-mono-< m n p q m<n p<q = <-trans (+-monoˡ-< m n p m<n) (+-monoʳ-< n p q p<q)
+
+*-monoʳ-< : (n p q : ℕ) → p < q → (suc n) * p < (suc n) * q
+*-monoʳ-< zero p q p<q rewrite +-identityʳ p | +-identityʳ q = p<q
+*-monoʳ-< (suc n) p q p<q =
+    <-trans
+        (+-monoˡ-< p q (p + n * p) p<q)
+        (+-monoʳ-< q (p + n * p) (q + n * q) (*-monoʳ-< n p q p<q))
 
 ≤-to-< : (m n : ℕ) → suc m ≤ n → m < n
 ≤-to-< zero (suc _) (s≤s _) = z<s
@@ -184,7 +200,7 @@ o+o≡e (suc {m} em) (suc {n} en) rewrite +-suc m n = suc (suc (e+e≡e em en))
 -- Binary Natural Numbers (Continued)
 
 open import plfa.part1.Induction
-    using (Bin; ⟨⟩; _O; _I; bsuc; to; from; badd; bzero; badd-bsuc-l)
+    using (Bin; ⟨⟩; _O; _I; bsuc; toBin; fromBin; badd; bzero; badd-bsuc-l)
 
 data One : Bin → Set where
     justI : One (⟨⟩ I)
@@ -204,41 +220,41 @@ can-bsuc : {b : Bin} → Can b → Can (bsuc b)
 can-bsuc justO = fromOne justI
 can-bsuc (fromOne p) = fromOne (one-bsuc p)
 
-one-to : (n : ℕ) → One (to (suc n))
-one-to zero = justI
-one-to (suc n) = one-bsuc (one-to n)
+one-toBin : (n : ℕ) → One (toBin (suc n))
+one-toBin zero = justI
+one-toBin (suc n) = one-bsuc (one-toBin n)
 
-can-to : (n : ℕ) → Can (to n)
-can-to zero = justO
-can-to (suc n) = fromOne (one-to n)
+can-toBin : (n : ℕ) → Can (toBin n)
+can-toBin zero = justO
+can-toBin (suc n) = fromOne (one-toBin n)
 
 badd-bzero : (b : Bin) → Can b → badd bzero b ≡ b
 badd-bzero _ justO = refl
 badd-bzero (b O) (fromOne p) = refl
 badd-bzero (b I) (fromOne p) = refl
 
-to-hom-+ : (n m : ℕ) → to (n + m) ≡ badd (to n) (to m)
-to-hom-+ zero m rewrite badd-bzero (to m) (can-to m) = refl
-to-hom-+ (suc n) m
-    rewrite badd-bsuc-l (to n) (to m)
-    | to-hom-+ n m = refl
+toBin-hom-+ : (n m : ℕ) → toBin (n + m) ≡ badd (toBin n) (toBin m)
+toBin-hom-+ zero m rewrite badd-bzero (toBin m) (can-toBin m) = refl
+toBin-hom-+ (suc n) m
+    rewrite badd-bsuc-l (toBin n) (toBin m)
+    | toBin-hom-+ n m = refl
 
 badd-double : (b : Bin) → One b → badd b b ≡ b O
 badd-double _ justI = refl
 badd-double (b O) (caseO p) rewrite badd-double b p = refl
 badd-double (b I) (caseI p) rewrite badd-double b p = refl
 
-one-to-from : (b : Bin) → One b → to (from b) ≡ b
-one-to-from _ justI = refl
-one-to-from (b O) (caseO p)
-    rewrite to-hom-+ (from b) (from b)
-    | one-to-from b p
+one-toBin-fromBin : (b : Bin) → One b → toBin (fromBin b) ≡ b
+one-toBin-fromBin _ justI = refl
+one-toBin-fromBin (b O) (caseO p)
+    rewrite toBin-hom-+ (fromBin b) (fromBin b)
+    | one-toBin-fromBin b p
     | badd-double b p = refl
-one-to-from (b I) (caseI p)
-    rewrite to-hom-+ (from b) (from b)
-    | one-to-from b p
+one-toBin-fromBin (b I) (caseI p)
+    rewrite toBin-hom-+ (fromBin b) (fromBin b)
+    | one-toBin-fromBin b p
     | badd-double b p = refl
 
-can-to-from : (b : Bin) → Can b → to (from b) ≡ b
-can-to-from _ justO = refl
-can-to-from b (fromOne p) = one-to-from b p
+can-toBin-fromBin : (b : Bin) → Can b → toBin (fromBin b) ≡ b
+can-toBin-fromBin _ justO = refl
+can-toBin-fromBin b (fromOne p) = one-toBin-fromBin b p

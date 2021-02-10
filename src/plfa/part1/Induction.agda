@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.part1.Induction where
 
 import Relation.Binary.PropositionalEquality as Eq
@@ -187,6 +189,14 @@ _ =
 *-zero zero = refl
 *-zero (suc n) rewrite *-zero n = refl
 
+*-identityˡ : (n : ℕ) → 1 * n ≡ n
+*-identityˡ zero = refl
+*-identityˡ (suc n) rewrite *-identityˡ n = refl
+
+*-identityʳ : (n : ℕ) → n * 1 ≡ n
+*-identityʳ zero = refl
+*-identityʳ (suc n) rewrite *-identityʳ n = refl
+
 *-suc : (m n : ℕ) → m * suc n ≡ m + m * n
 *-suc zero n = refl
 *-suc (suc m) n rewrite *-suc m n | +-swap n m (m * n) = refl
@@ -227,6 +237,23 @@ _ =
     | *-suc n p
     | ^-distribˡ-+-* m n (n * p) = refl
 
+suc-cancel : {n m : ℕ} → suc n ≡ suc m → n ≡ m
+suc-cancel refl = refl
+
++-cancel-l : (n m k : ℕ) → k + n ≡ k + m → n ≡ m
++-cancel-l n m zero p = p
++-cancel-l n m (suc k) p = +-cancel-l n m k (suc-cancel p)
+
++-cancel-r : (n m k : ℕ) → n + k ≡ m + k → n ≡ m
++-cancel-r n m k rewrite +-comm n k | +-comm m k = +-cancel-l n m k
+
+*-cancel-r : (n m k : ℕ) → n * (suc k) ≡ m * (suc k) → n ≡ m
+*-cancel-r zero zero k p = refl
+*-cancel-r (suc n) (suc m) k p = cong suc (*-cancel-r n m k (+-cancel-l (n * suc k) (m * suc k) (suc k) p))
+
+*-cancel-l : (n m k : ℕ) → (suc k) * n ≡ (suc k) * m → n ≡ m
+*-cancel-l n m k rewrite *-comm (suc k) n | *-comm (suc k) m = *-cancel-r n m k
+
 -- Binary Natural Numbers
 
 data Bin : Set where
@@ -242,53 +269,53 @@ bsuc (b I) = (bsuc b) O
 _ : bsuc (⟨⟩ I O I I) ≡ ⟨⟩ I I O O
 _ = refl
 
-to : ℕ → Bin
-to zero = ⟨⟩ O
-to (suc n) = bsuc (to n)
+toBin : ℕ → Bin
+toBin zero = ⟨⟩ O
+toBin (suc n) = bsuc (toBin n)
 
-_ : to 0 ≡ ⟨⟩ O
+_ : toBin 0 ≡ ⟨⟩ O
 _ = refl
 
-_ : to 1 ≡ ⟨⟩ I
+_ : toBin 1 ≡ ⟨⟩ I
 _ = refl
 
-_ : to 2 ≡ ⟨⟩ I O
+_ : toBin 2 ≡ ⟨⟩ I O
 _ = refl
 
-_ : to 3 ≡ ⟨⟩ I I
+_ : toBin 3 ≡ ⟨⟩ I I
 _ = refl
 
-_ : to 4 ≡ ⟨⟩ I O O
+_ : toBin 4 ≡ ⟨⟩ I O O
 _ = refl
 
-from : Bin → ℕ
-from ⟨⟩ = 0
-from (b O) = from b + from b
-from (b I) = suc (from b + from b)
+fromBin : Bin → ℕ
+fromBin ⟨⟩ = 0
+fromBin (b O) = fromBin b + fromBin b
+fromBin (b I) = suc (fromBin b + fromBin b)
 
-_ : from (⟨⟩ O) ≡ 0
+_ : fromBin (⟨⟩ O) ≡ 0
 _ = refl
 
-_ : from (⟨⟩ I) ≡ 1
+_ : fromBin (⟨⟩ I) ≡ 1
 _ = refl
 
-_ : from (⟨⟩ I O) ≡ 2
+_ : fromBin (⟨⟩ I O) ≡ 2
 _ = refl
 
-_ : from (⟨⟩ I I) ≡ 3
+_ : fromBin (⟨⟩ I I) ≡ 3
 _ = refl
 
-_ : from (⟨⟩ I O O) ≡ 4
+_ : fromBin (⟨⟩ I O O) ≡ 4
 _ = refl
 
-from-bsuc : (b : Bin) → from (bsuc b) ≡ suc (from b)
-from-bsuc ⟨⟩ = refl
-from-bsuc (b O) = refl
-from-bsuc (b I) rewrite from-bsuc b | +-suc (from b) (from b) = refl
+fromBin-bsuc : (b : Bin) → fromBin (bsuc b) ≡ suc (fromBin b)
+fromBin-bsuc ⟨⟩ = refl
+fromBin-bsuc (b O) = refl
+fromBin-bsuc (b I) rewrite fromBin-bsuc b | +-suc (fromBin b) (fromBin b) = refl
 
-from-to : (n : ℕ) → from (to n) ≡ n
-from-to zero = refl
-from-to (suc n) rewrite from-bsuc (to n) | from-to n = refl
+fromBin-toBin : (n : ℕ) → fromBin (toBin n) ≡ n
+fromBin-toBin zero = refl
+fromBin-toBin (suc n) rewrite fromBin-bsuc (toBin n) | fromBin-toBin n = refl
 
 badd : Bin → Bin → Bin
 badd ⟨⟩ y = y
@@ -341,18 +368,18 @@ badd-bzero-bsuc ⟨⟩ = refl
 badd-bzero-bsuc (x O) = refl
 badd-bzero-bsuc (x I) = refl
 
-to-hom-+' : (n m : ℕ) → to (n + m) ≡ badd (to n) (to m)
-to-hom-+' zero zero = refl
-to-hom-+' zero (suc m) = sym (badd-bzero-bsuc (to m))
-to-hom-+' (suc n) zero
-    rewrite badd-comm (bsuc (to n)) bzero
-    | badd-bzero-bsuc (to n)
+toBin-hom-+' : (n m : ℕ) → toBin (n + m) ≡ badd (toBin n) (toBin m)
+toBin-hom-+' zero zero = refl
+toBin-hom-+' zero (suc m) = sym (badd-bzero-bsuc (toBin m))
+toBin-hom-+' (suc n) zero
+    rewrite badd-comm (bsuc (toBin n)) bzero
+    | badd-bzero-bsuc (toBin n)
     | +-identityʳ n = refl
-to-hom-+' (suc n) (suc m)
-    rewrite badd-bsuc-l (to n) (bsuc (to m))
-    | badd-bsuc-r (to n) (to m)
+toBin-hom-+' (suc n) (suc m)
+    rewrite badd-bsuc-l (toBin n) (bsuc (toBin m))
+    | badd-bsuc-r (toBin n) (toBin m)
     | +-suc n m
-    | to-hom-+' n m = refl
+    | toBin-hom-+' n m = refl
 
 helper : (a b c d : ℕ) → ((a + b) + (c + d)) ≡ ((a + c) + (b + d))
 helper a b c d
@@ -362,25 +389,25 @@ helper a b c d
     | +-assoc c b d
     | sym (+-assoc a c (b + d)) = refl
 
-from-hom : (x y : Bin) → from (badd x y) ≡ from x + from y
-from-hom ⟨⟩ y = refl
-from-hom (x O) ⟨⟩ rewrite +-identityʳ (from x + from x) = refl
-from-hom (x O) (y O)
-    rewrite from-hom x y
-    | helper (from x) (from y) (from x) (from y) = refl
-from-hom (x O) (y I)
-    rewrite from-hom x y
-    | +-suc (from x + from x) (from y + from y)
-    | helper (from x) (from y) (from x) (from y) = refl
-from-hom (x I) ⟨⟩ rewrite +-identityʳ (from x + from x) = refl
-from-hom (x I) (y O)
-    rewrite from-hom x y
-    | helper (from x) (from y) (from x) (from y) = refl
-from-hom (x I) (y I)
-    rewrite from-bsuc (badd x y)
-    | from-hom x y
-    | +-suc (from x + from y) (from x + from y)
-    | +-suc (from x + from x) (from y + from y)
-    | helper (from x) (from y) (from x) (from y) = refl
+fromBin-hom : (x y : Bin) → fromBin (badd x y) ≡ fromBin x + fromBin y
+fromBin-hom ⟨⟩ y = refl
+fromBin-hom (x O) ⟨⟩ rewrite +-identityʳ (fromBin x + fromBin x) = refl
+fromBin-hom (x O) (y O)
+    rewrite fromBin-hom x y
+    | helper (fromBin x) (fromBin y) (fromBin x) (fromBin y) = refl
+fromBin-hom (x O) (y I)
+    rewrite fromBin-hom x y
+    | +-suc (fromBin x + fromBin x) (fromBin y + fromBin y)
+    | helper (fromBin x) (fromBin y) (fromBin x) (fromBin y) = refl
+fromBin-hom (x I) ⟨⟩ rewrite +-identityʳ (fromBin x + fromBin x) = refl
+fromBin-hom (x I) (y O)
+    rewrite fromBin-hom x y
+    | helper (fromBin x) (fromBin y) (fromBin x) (fromBin y) = refl
+fromBin-hom (x I) (y I)
+    rewrite fromBin-bsuc (badd x y)
+    | fromBin-hom x y
+    | +-suc (fromBin x + fromBin y) (fromBin x + fromBin y)
+    | +-suc (fromBin x + fromBin x) (fromBin y + fromBin y)
+    | helper (fromBin x) (fromBin y) (fromBin x) (fromBin y) = refl
 
 -- import Data.Nat.Properties using (+-assoc; +-identityʳ; +-suc; +-comm)

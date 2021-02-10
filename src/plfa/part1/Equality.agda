@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.part1.Equality where
 
 -- Equality
@@ -120,65 +122,6 @@ subst-iso P refl .to∘from _ = refl
 -- subst-iso P p .from = subst P (sym p)
 -- subst-iso P p .from∘to u = trans (trans (sym (subst-trans P p (sym p))) (cong (λ e → subst P e u) (trans-sym-r p))) refl
 -- subst-iso P p .to∘from v = trans (trans (sym (subst-trans P (sym p) p)) (cong (λ e → subst P e v) (trans-sym-l p))) refl
-
-H : {A : Set} → {x : A} → {D : (y : A) → x ≡ y → Set}
-    → D x refl
-    → (y : A) → (e : x ≡ y) → D y e
-H d y refl = d
-
-J : {A : Set} → {C : (x y : A) → x ≡ y → Set}
-    → ((x : A) → C x x refl)
-    → (x y : A) → (e : x ≡ y) → C x y e
-J c x .x refl = c x
-
-record Σ (A : Set) (B : A → Set) : Set where
-    constructor _,_
-    field
-        π₁ : A
-        π₂ : B π₁
-open Σ
-infixr 4 _,_
-
-lift : {A : Set} → {B : A → Set} → {a x : A} → (b : B a)→ (e : a ≡ x) → (a , b) ≡ (x , subst B e b)
-lift {A} {B} {a} {x} b e = J {A} {λ (a x : A) (e : a ≡ x) → (b : B a) → (a , b) ≡ (x , subst B e b)}
-    (λ x b → refl) a x e b
--- lift b refl = refl
-
-lift-π₁ : {A : Set} → {B : A → Set} → {a x : A} → (b : B a)→ (e : a ≡ x) → cong π₁ (lift {A} {B} b e) ≡ e
-lift-π₁ {A} {B} {a} {x} b e = J {A} {λ (a x : A) (e : a ≡ x) → (b : B a) → cong π₁ (lift {A} {B} b e) ≡ e}
-    (λ x b → refl) a x e b
--- lift-π₁ b refl = refl
-
-singleton : {A : Set} → (x : A) → Set
-singleton {A} x = Σ A (λ y → x ≡ y)
-
-lift-singleton : {A : Set} → {x y : A} → (e : x ≡ y) → (x , refl {A} {x}) ≡ (y , e)
-lift-singleton {A} {x} {y} e = J {A} {λ (x y : A) (e : x ≡ y) → (x , refl {A} {x}) ≡ (y , e)}
-    (λ x → refl) x y e
-
-H-from-J : {A : Set} → {x : A} → {D : (y : A) → x ≡ y → Set}
-    → D x refl
-    → (y : A) → (e : x ≡ y) → D y e
-H-from-J {A} {x} {D} d y e = subst D′ (lift-singleton e) d where
-    D′ : singleton x → Set
-    D′ w = D (π₁ w) (π₂ w)
-
-H-from-J≡H : {A : Set} → {x : A} → {D : (y : A) → x ≡ y → Set}
-    → (d : D x refl)
-    → (y : A) → (e : x ≡ y)
-    → H-from-J {A} {x} {D} d y e ≡ H {A} {x} {D} d y e
-H-from-J≡H d y refl = refl
-
-J-from-H : {A : Set} → {C : (x y : A) → x ≡ y → Set}
-    → ((x : A) → C x x refl)
-    → (x y : A) → (e : x ≡ y) → C x y e
-J-from-H c x = H (c x)
-
-J-from-H≡J : {A : Set} → {C : (x y : A) → x ≡ y → Set}
-    → (c : (x : A) → C x x refl)
-    → (x y : A) → (e : x ≡ y)
-    → J-from-H {A} {C} c x y e ≡ J {A} {C} c x y e
-J-from-H≡J c x .x refl = refl
 
 -- Chains of Equations
 

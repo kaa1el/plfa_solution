@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.part1.Naturals where
 
 data ℕ : Set where

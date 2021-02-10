@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.part1.Connectives where
 
 import Relation.Binary.PropositionalEquality as Eq
@@ -366,7 +368,7 @@ rec-Bool = ind-Bool
 +-weak-× (inj₁ x , z) = inj₁ x
 +-weak-× (inj₂ y , z) = inj₂ (y , z)
 
-+×-implies-×+ : {A B C D : Set} → (A × B) + (C × D) → (A + C) × (B + D) -- converse does not hold, try (A,B,C,D) = (Empty,Unit,Unit,Empty)
++×-implies-×+ : {A B C D : Set} → (A × B) + (C × D) → (A + C) × (B + D) -- The converse does not hold, try (A,B,C,D) = (Empty,Unit,Unit,Empty)
 +×-implies-×+ (inj₁ (x , y)) = (inj₁ x , inj₁ y)
 +×-implies-×+ (inj₂ (z , w)) = (inj₂ z , inj₂ w)
 

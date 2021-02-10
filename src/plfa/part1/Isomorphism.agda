@@ -1,3 +1,5 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.part1.Isomorphism where
 
 import Relation.Binary.PropositionalEquality as Eq
@@ -225,14 +227,14 @@ open _⇔_
 ⇔-trans A⇔B B⇔C .to = B⇔C .to ∘ A⇔B .to
 ⇔-trans A⇔B B⇔C .from = A⇔B .from ∘ B⇔C .from
 
-open import plfa.part1.Induction using (Bin; to; from; from-to)
+open import plfa.part1.Induction using (Bin; toBin; fromBin; fromBin-toBin)
 
 ℕ≲Bin : ℕ ≲ Bin
 ℕ≲Bin =
     record {
-        to = plfa.part1.Induction.to;
-        from = plfa.part1.Induction.from;
-        from∘to = plfa.part1.Induction.from-to
+        to = toBin;
+        from = fromBin;
+        from∘to = fromBin-toBin
     }
 
 -- import Function using (_∘_)
