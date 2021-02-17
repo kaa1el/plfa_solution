@@ -237,12 +237,12 @@ _ =
     | *-suc n p
     | ^-distribˡ-+-* m n (n * p) = refl
 
-suc-cancel : {n m : ℕ} → suc n ≡ suc m → n ≡ m
-suc-cancel refl = refl
+suc-inj : {n m : ℕ} → suc n ≡ suc m → n ≡ m
+suc-inj refl = refl
 
 +-cancel-l : (n m k : ℕ) → k + n ≡ k + m → n ≡ m
 +-cancel-l n m zero p = p
-+-cancel-l n m (suc k) p = +-cancel-l n m k (suc-cancel p)
++-cancel-l n m (suc k) p = +-cancel-l n m k (suc-inj p)
 
 +-cancel-r : (n m k : ℕ) → n + k ≡ m + k → n ≡ m
 +-cancel-r n m k rewrite +-comm n k | +-comm m k = +-cancel-l n m k

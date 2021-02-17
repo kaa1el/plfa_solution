@@ -16,7 +16,7 @@ Agda version: `2.6.1.2`
 - [x] 6. [Connectives](https://plfa.github.io/Connectives/)
 - [x] 7. [Negation](https://plfa.github.io/Negation/)
 - [x] 8. [Quantifiers](https://plfa.github.io/Quantifiers/)
-- [ ] 9. [Decidable](https://plfa.github.io/Decidable/)
+- [x] 9. [Decidable](https://plfa.github.io/Decidable/)
 - [ ] 10. [Lists](https://plfa.github.io/Lists/)
 
 ### Part 2

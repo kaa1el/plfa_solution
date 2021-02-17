@@ -11,10 +11,10 @@ open import Relation.Nullary using (¬_)
 open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
-open import Data.Sum using (inj₁; inj₂) renaming (_⊎_ to _⊔_)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_∘_)
 
-open import plfa.part1.Induction using (suc-cancel; +-cancel-r; *-cancel-r; *-cancel-l)
+open import plfa.part1.Induction using (suc-inj; +-cancel-r; *-cancel-r; *-cancel-l)
 open import plfa.part1.Relations using (Even; Odd)
 open import plfa.part1.Isomorphism using (_≅_; extensionality; Π-extensionality)
 open import plfa.part1.Connectives using (Color)
@@ -42,10 +42,10 @@ open _≅_
 Π-distrib-× .from∘to _ = refl
 Π-distrib-× .to∘from _ = refl
 
-⊔Π-implies-Π⊔ : {A : Set} → {B C : A → Set}
-    → Π A B ⊔ Π A C → Π A (λ x → B x ⊔ C x)
-⊔Π-implies-Π⊔ (inj₁ f) x = inj₁ (f x)
-⊔Π-implies-Π⊔ (inj₂ g) x = inj₂ (g x)
+⊎Π-implies-Π⊎ : {A : Set} → {B C : A → Set}
+    → Π A B ⊎ Π A C → Π A (λ x → B x ⊎ C x)
+⊎Π-implies-Π⊎ (inj₁ f) x = inj₁ (f x)
+⊎Π-implies-Π⊎ (inj₂ g) x = inj₂ (g x)
 
 -- The converse does not hold, consider:
 -- A = Bool
@@ -82,16 +82,16 @@ currying .from g x y = g (x , y)
 currying .from∘to f = refl
 currying .to∘from g = Π-extensionality λ { (x , y) → refl }
 
-Σ-distrib-⊔ : {A : Set} → {B C : A → Set}
-    → Σ A (λ x → B x ⊔ C x) ≅ Σ A B ⊔ Σ A C
-Σ-distrib-⊔ .to (x , inj₁ y) = inj₁ (x , y)
-Σ-distrib-⊔ .to (x , inj₂ z) = inj₂ (x , z)
-Σ-distrib-⊔ .from (inj₁ (x , y)) = x , inj₁ y
-Σ-distrib-⊔ .from (inj₂ (x , z)) = x , inj₂ z
-Σ-distrib-⊔ .from∘to (x , inj₁ y) = refl
-Σ-distrib-⊔ .from∘to (x , inj₂ z) = refl
-Σ-distrib-⊔ .to∘from (inj₁ (x , y)) = refl
-Σ-distrib-⊔ .to∘from (inj₂ (x , z)) = refl
+Σ-distrib-⊎ : {A : Set} → {B C : A → Set}
+    → Σ A (λ x → B x ⊎ C x) ≅ Σ A B ⊎ Σ A C
+Σ-distrib-⊎ .to (x , inj₁ y) = inj₁ (x , y)
+Σ-distrib-⊎ .to (x , inj₂ z) = inj₂ (x , z)
+Σ-distrib-⊎ .from (inj₁ (x , y)) = x , inj₁ y
+Σ-distrib-⊎ .from (inj₂ (x , z)) = x , inj₂ z
+Σ-distrib-⊎ .from∘to (x , inj₁ y) = refl
+Σ-distrib-⊎ .from∘to (x , inj₂ z) = refl
+Σ-distrib-⊎ .to∘from (inj₁ (x , y)) = refl
+Σ-distrib-⊎ .to∘from (inj₂ (x , z)) = refl
 
 Σ×-implies-xΣ : {A : Set} → {B C : A → Set}
     → Σ A (λ x → B x × C x) → (Σ A B) × (Σ A C)
@@ -102,20 +102,20 @@ currying .to∘from g = Π-extensionality λ { (x , y) → refl }
 -- B false = Empty, B true = Unit
 -- C false = Unit, C true = Empty
 
-Σ-⊔ : (B : Color → Set)
-    → Σ Color B ≅ B red ⊔ B green ⊔ B blue
-Σ-⊔ B .to (red , r) = inj₁ r
-Σ-⊔ B .to (green , g) = inj₂ (inj₁ g)
-Σ-⊔ B .to (blue , b) = inj₂ (inj₂ b)
-Σ-⊔ B .from (inj₁ r) = red , r
-Σ-⊔ B .from (inj₂ (inj₁ g)) = green , g
-Σ-⊔ B .from (inj₂ (inj₂ b)) = blue , b
-Σ-⊔ B .from∘to (red , r) = refl
-Σ-⊔ B .from∘to (green , g) = refl
-Σ-⊔ B .from∘to (blue , b) = refl
-Σ-⊔ B .to∘from (inj₁ r) = refl
-Σ-⊔ B .to∘from (inj₂ (inj₁ g)) = refl
-Σ-⊔ B .to∘from (inj₂ (inj₂ b)) = refl
+Σ-⊎ : (B : Color → Set)
+    → Σ Color B ≅ B red ⊎ B green ⊎ B blue
+Σ-⊎ B .to (red , r) = inj₁ r
+Σ-⊎ B .to (green , g) = inj₂ (inj₁ g)
+Σ-⊎ B .to (blue , b) = inj₂ (inj₂ b)
+Σ-⊎ B .from (inj₁ r) = red , r
+Σ-⊎ B .from (inj₂ (inj₁ g)) = green , g
+Σ-⊎ B .from (inj₂ (inj₂ b)) = blue , b
+Σ-⊎ B .from∘to (red , r) = refl
+Σ-⊎ B .from∘to (green , g) = refl
+Σ-⊎ B .from∘to (blue , b) = refl
+Σ-⊎ B .to∘from (inj₁ r) = refl
+Σ-⊎ B .to∘from (inj₂ (inj₁ g)) = refl
+Σ-⊎ B .to∘from (inj₂ (inj₂ b)) = refl
 
 Even-Σeven : {n : ℕ} → Even n → Σ ℕ (λ m → m * 2 ≡ n)
 Odd-Σodd : {n : ℕ} → Odd n → Σ ℕ (λ m → 1 + m * 2 ≡ n)
@@ -247,7 +247,7 @@ Odd-Is-hProp (Odd.suc p) (Odd.suc q) = cong Odd.suc (Even-Is-hProp p q)
 -- Σeven-Is-hProp (m , refl) (.m , refl) | refl = refl
 
 Σodd-Is-hProp : {n : ℕ} → Is-hProp (Σ ℕ (λ m → 1 + m * 2 ≡ n))
-Σodd-Is-hProp (m , refl) (k , q) with *-cancel-r k m 1 (suc-cancel q)
+Σodd-Is-hProp (m , refl) (k , q) with *-cancel-r k m 1 (suc-inj q)
 ... | refl = cong (λ p → m , p) (ℕ-Is-hSet (1 + m * 2) (1 + m * 2) refl q)
 -- same as above, ℕ-Is-hSet essentially says axiom-K can be applied to ℕ:
 -- Σodd-Is-hProp (m , refl) (.m , refl) | refl = refl
@@ -532,3 +532,5 @@ toBℕ∘fromBℕ (pos (x b1)) =
 ℕ≅Bℕ .from = fromBℕ
 ℕ≅Bℕ .from∘to = fromBℕ∘toBℕ
 ℕ≅Bℕ .to∘from = toBℕ∘fromBℕ
+
+-- import Data.Product using (Σ; _,_; ∃; Σ-syntax; ∃-syntax)
