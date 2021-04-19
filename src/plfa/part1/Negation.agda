@@ -9,6 +9,7 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (inj₁; inj₂) renaming (_⊎_ to _+_)
 open import Data.Product using (Σ; _,_; _×_; proj₁; proj₂)
 open import Data.Maybe
+open import Function using (_∘_)
 
 open import plfa.part1.Relations using (_<_; _>_)
 open import plfa.part1.Isomorphism using (_≅_; extensionality; Π-extensionality; id)
@@ -183,6 +184,31 @@ module Classical where
 
     dm-implies-iad : DeMorgan → ImplicationAsDisjunction
     dm-implies-iad dm A B f = dm B (¬ A) λ w → proj₂ w λ x → proj₁ w (f x)
+
+    NotImplicationAsConjunction : Set₁
+    NotImplicationAsConjunction = (A B : Set) → ¬ (A → B) → A × ¬ B
+
+    niac-implies-em : NotImplicationAsConjunction → ExcludedMiddle
+    niac-implies-em niac A = proj₁ (niac (A + ¬ A) ⊥ λ f → f (inj₂ λ x → f (inj₁ x)))
+
+    em-implies-niac : ExcludedMiddle → NotImplicationAsConjunction
+    em-implies-niac em A B f with em A
+    ... | inj₁ x = x , λ y → f (λ _ → y)
+    ... | inj₂ g = ⊥-elim (f (⊥-elim ∘ g))
+
+    NotPiAsSigma : Set₁
+    NotPiAsSigma = (A : Set) → (B : A → Set) → ¬ ((x : A) → B x) → Σ A (¬_ ∘ B)
+
+    npas-implies-em : NotPiAsSigma → ExcludedMiddle
+    npas-implies-em npas A = proj₁ (npas (A + ¬ A) (λ _ → ⊥) λ f → f (inj₂ λ x → f (inj₁ x)))
+
+    em-implies-npas : ExcludedMiddle → NotPiAsSigma
+    em-implies-npas em A B f with em (Σ A (¬_ ∘ B))
+    ... | inj₁ w = w
+    ... | inj₂ g = ⊥-elim (f λ x → helper x (em (B x))) where
+        helper : (x : A) → (B x) + ¬ (B x) → B x
+        helper x (inj₁ y) = y
+        helper x (inj₂ h) = ⊥-elim (g (x , h))
 
     Decidable : Set → Set
     Decidable A = A + ¬ A

@@ -146,6 +146,15 @@ Is-hProp A = (x y : A) → x ≡ y
 Is-hSet : Set → Set
 Is-hSet A = (x y : A) → Is-hProp (x ≡ y)
 
+×-Is-hProp : (A B : Set) → Is-hProp A → Is-hProp B → Is-hProp (A × B)
+×-Is-hProp A B p q (x1 , y1) (x2 , y2) = cong₂ _,_ (p x1 x2) (q y1 y2)
+
+→-Is-hProp : (A B : Set) → Is-hProp B → Is-hProp (A → B)
+→-Is-hProp A B q f g = extensionality λ x → q (f x) (g x)
+
+Π-Is-hProp : (A : Set) → (P : A → Set) → ((x : A) → Is-hProp (P x)) → Is-hProp ((x : A) → P x)
+Π-Is-hProp A P q f g = Π-extensionality (λ x → q x (f x) (g x))
+
 code : ℕ → ℕ → Set
 code zero zero = ⊤
 code zero (suc m) = ⊥
@@ -318,12 +327,34 @@ open _≤_
 ¬Σ≅Π¬ .from∘to f = extensionality (λ { (x , y) → refl })
 ¬Σ≅Π¬ .to∘from g = refl
 
-Σ¬-implies-¬Π : {A : Set} → {B : A → Set}
+Σ¬→¬Π : {A : Set} → {B : A → Set}
     → Σ A (¬_ ∘ B) → ¬ Π A B
-Σ¬-implies-¬Π (x , f) g = f (g x)
+Σ¬→¬Π (x , f) g = f (g x)
 
--- The converse does not hold, consider:
--- A = Empty, then ¬ Π A B ≅ Unit, Σ A (¬_ ∘ B) ≅ Empty
+-- The converse cannot be disproved, if the converse can be disproved, then it must hold in all Heyting models,
+-- in particular all Boolean models, hence the double negation translation of the converse must not hold as well,
+-- but since the converse can be classically proved, its double negation translation can be constructively proved,
+-- as shown below in ¬Π¬¬→¬¬Σ¬, furthermore, the converse is logically equivalent to excluded middle, see NotPiAsSigma
+-- in Negation.agda
+
+¬-Is-hProp : {A : Set} → Is-hProp (¬ A)
+¬-Is-hProp f g = extensionality λ x → ⊥-elim (f x)
+
+¬¬¬≅¬ : {A : Set} → ¬ ¬ ¬ A ≅ ¬ A
+¬¬¬≅¬ = record {
+        to = λ f x → f λ g → g x;
+        from = λ f g → g f;
+        from∘to = λ f → extensionality λ g → ⊥-elim (f g);
+        to∘from = λ f → refl
+    }
+
+¬Π¬¬→¬¬Σ¬¬¬ : {A : Set} → {B : A → Set}
+    → ¬ Π A (¬_ ∘ ¬_ ∘ B) → ¬ ¬ Σ A (¬_ ∘ ¬_ ∘ ¬_ ∘ B)
+¬Π¬¬→¬¬Σ¬¬¬ f g = f (λ x h → g (x , λ j → j h))
+
+¬Π¬¬→¬¬Σ¬ : {A : Set} → {B : A → Set}
+    → ¬ Π A (¬_ ∘ ¬_ ∘ B) → ¬ ¬ Σ A (¬_ ∘ B)
+¬Π¬¬→¬¬Σ¬ f g = f (λ x h → g (x , h))
 
 open import plfa.part1.Induction using (Bin; toBin; fromBin; fromBin-toBin)
 open import plfa.part1.Relations using (One; Can; can-toBin; can-toBin-fromBin)
@@ -482,22 +513,22 @@ sucPos≡p1+Pos p1 = refl
 sucPos≡p1+Pos (x b0) = refl
 sucPos≡p1+Pos (x b1) = refl
 
-sucPos∘Pos : (x y : Pos) → sucPos (x +Pos y) ≡ (sucPos x) +Pos y
-sucPos∘Pos p1 p1 = refl
-sucPos∘Pos p1 (y b0) = cong _b0 (sucPos≡p1+Pos y)
-sucPos∘Pos p1 (y b1) = cong _b1 (sucPos≡p1+Pos y)
-sucPos∘Pos (x b0) p1 = refl
-sucPos∘Pos (x b0) (y b0) = refl
-sucPos∘Pos (x b0) (y b1) = refl
-sucPos∘Pos (x b1) p1 = refl
-sucPos∘Pos (x b1) (y b0) = cong _b0 (sucPos∘Pos x y)
-sucPos∘Pos (x b1) (y b1) = cong _b1 (sucPos∘Pos x y)
+sucPos∘+Pos : (x y : Pos) → sucPos (x +Pos y) ≡ (sucPos x) +Pos y
+sucPos∘+Pos p1 p1 = refl
+sucPos∘+Pos p1 (y b0) = cong _b0 (sucPos≡p1+Pos y)
+sucPos∘+Pos p1 (y b1) = cong _b1 (sucPos≡p1+Pos y)
+sucPos∘+Pos (x b0) p1 = refl
+sucPos∘+Pos (x b0) (y b0) = refl
+sucPos∘+Pos (x b0) (y b1) = refl
+sucPos∘+Pos (x b1) p1 = refl
+sucPos∘+Pos (x b1) (y b0) = cong _b0 (sucPos∘+Pos x y)
+sucPos∘+Pos (x b1) (y b1) = cong _b1 (sucPos∘+Pos x y)
 
 sucBℕ∘+Bℕ : (x y : Bℕ) → sucBℕ (x +Bℕ y) ≡ (sucBℕ x) +Bℕ y
 sucBℕ∘+Bℕ bzero bzero = refl
 sucBℕ∘+Bℕ bzero (pos y) = cong pos (sucPos≡p1+Pos y)
 sucBℕ∘+Bℕ (pos x) bzero = refl
-sucBℕ∘+Bℕ (pos x) (pos y) = cong pos (sucPos∘Pos x y)
+sucBℕ∘+Bℕ (pos x) (pos y) = cong pos (sucPos∘+Pos x y)
 
 toBℕ∘+ : (n m : ℕ) → toBℕ (n + m) ≡ (toBℕ n) +Bℕ (toBℕ m)
 toBℕ∘+ zero m = refl
@@ -532,5 +563,135 @@ toBℕ∘fromBℕ (pos (x b1)) =
 ℕ≅Bℕ .from = fromBℕ
 ℕ≅Bℕ .from∘to = fromBℕ∘toBℕ
 ℕ≅Bℕ .to∘from = toBℕ∘fromBℕ
+
+-- Binary naturals without Pos and Can
+
+data ℕb : Set where
+    0b : ℕb
+    1+2*_ : ℕb → ℕb
+    2+2*_ : ℕb → ℕb
+
+1b : ℕb
+1b = 1+2* 0b
+
+2b : ℕb
+2b = 2+2* 0b
+
+3b : ℕb
+3b = 1+2* 1b
+
+4b : ℕb
+4b = 2+2* 1b
+
+-- 0 0 0
+-- 1 1 1
+-- 2 10 2
+-- 3 11 11
+-- 4 100 21
+-- 5 101 12
+-- 6 110 22
+-- 7 111 111
+-- 8 1000 211
+-- 9 1001 121
+-- 10 1010 221
+-- 11 1011 112
+-- 12 1100 212
+-- 13 1101 122
+-- 14 1110 222
+-- 15 1111 1111
+
+sucℕb : ℕb → ℕb
+sucℕb 0b = 1b
+sucℕb (1+2* x) = 2+2* x
+sucℕb (2+2* x) = 1+2* (sucℕb x)
+
+toℕb : ℕ → ℕb
+toℕb zero = 0b
+toℕb (suc n) = sucℕb (toℕb n)
+
+fromℕb : ℕb → ℕ
+fromℕb 0b = 0
+fromℕb (1+2* x) = 1 + fromℕb x + fromℕb x
+fromℕb (2+2* x) = 2 + fromℕb x + fromℕb x
+
+fromℕb∘sucℕb : (x : ℕb) → fromℕb (sucℕb x) ≡ suc (fromℕb x)
+fromℕb∘sucℕb 0b = refl
+fromℕb∘sucℕb (1+2* x) = refl
+fromℕb∘sucℕb (2+2* x) =
+    begin
+        suc (fromℕb (sucℕb x) + fromℕb (sucℕb x))
+    ≡⟨ cong suc (cong₂ _+_ (fromℕb∘sucℕb x) (fromℕb∘sucℕb x)) ⟩
+        suc (suc (fromℕb x) + suc (fromℕb x))
+    ≡⟨ cong (suc ∘ suc) (+-suc (fromℕb x) (fromℕb x)) ⟩
+        suc (suc (suc (fromℕb x + fromℕb x)))
+    ∎
+
+fromℕb∘toℕb : (n : ℕ) → fromℕb (toℕb n) ≡ n
+fromℕb∘toℕb zero = refl
+fromℕb∘toℕb (suc n) = trans (fromℕb∘sucℕb (toℕb n)) (cong suc (fromℕb∘toℕb n))
+
+_+ℕb_ : ℕb → ℕb → ℕb
+0b +ℕb y = y
+(1+2* x) +ℕb 0b = 1+2* x
+(1+2* x) +ℕb (1+2* y) = 2+2* (x +ℕb y)
+(1+2* x) +ℕb (2+2* y) = 1+2* (sucℕb (x +ℕb y))
+(2+2* x) +ℕb 0b = 2+2* x
+(2+2* x) +ℕb (1+2* y) = 1+2* (sucℕb (x +ℕb y))
+(2+2* x) +ℕb (2+2* y) = 2+2* (sucℕb (x +ℕb y))
+
+_ : fromℕb ((toℕb 123) +ℕb (toℕb 321)) ≡ 444
+_ = refl
+
+sucℕb≡1b+ℕb : (x : ℕb) → sucℕb x ≡ 1b +ℕb x
+sucℕb≡1b+ℕb 0b = refl
+sucℕb≡1b+ℕb (1+2* x) = refl
+sucℕb≡1b+ℕb (2+2* x) = refl
+
+sucℕb∘+ℕb : (x y : ℕb) → sucℕb (x +ℕb y) ≡ (sucℕb x) +ℕb y
+sucℕb∘+ℕb 0b y = sucℕb≡1b+ℕb y
+sucℕb∘+ℕb (1+2* x) 0b = refl
+sucℕb∘+ℕb (1+2* x) (1+2* y) = refl
+sucℕb∘+ℕb (1+2* x) (2+2* y) = refl
+sucℕb∘+ℕb (2+2* x) 0b = refl
+sucℕb∘+ℕb (2+2* x) (1+2* y) = cong 2+2*_ (sucℕb∘+ℕb x y)
+sucℕb∘+ℕb (2+2* x) (2+2* y) = cong (1+2*_ ∘ sucℕb) (sucℕb∘+ℕb x y)
+
+toℕb∘+ : (n m : ℕ) → toℕb (n + m) ≡ (toℕb n) +ℕb (toℕb m)
+toℕb∘+ zero m = refl
+toℕb∘+ (suc n) m = trans (cong sucℕb (toℕb∘+ n m)) (sucℕb∘+ℕb (toℕb n) (toℕb m))
+
+double∘sucℕb : (x : ℕb) → sucℕb (x +ℕb x) ≡ 1+2* x
+double∘sucℕb 0b = refl
+double∘sucℕb (1+2* x) = cong 1+2*_ (double∘sucℕb x)
+double∘sucℕb (2+2* x) = cong (1+2*_ ∘ sucℕb) (double∘sucℕb x)
+
+toℕb∘fromℕb : (x : ℕb) → toℕb (fromℕb x) ≡ x
+toℕb∘fromℕb 0b = refl
+toℕb∘fromℕb (1+2* x) =
+    begin
+        sucℕb (toℕb (fromℕb x + fromℕb x))
+    ≡⟨ cong sucℕb (toℕb∘+ (fromℕb x) (fromℕb x)) ⟩
+        sucℕb (toℕb (fromℕb x) +ℕb toℕb (fromℕb x))
+    ≡⟨ cong sucℕb (cong₂ _+ℕb_ (toℕb∘fromℕb x) (toℕb∘fromℕb x)) ⟩
+        sucℕb (x +ℕb x)
+    ≡⟨ double∘sucℕb x ⟩
+        1+2* x
+    ∎
+toℕb∘fromℕb (2+2* x) =
+    begin
+        toℕb (fromℕb (2+2* x))
+    ≡⟨ cong (sucℕb ∘ sucℕb) (toℕb∘+ (fromℕb x) (fromℕb x)) ⟩
+        sucℕb (sucℕb (toℕb (fromℕb x) +ℕb toℕb (fromℕb x)))
+    ≡⟨ cong (sucℕb ∘ sucℕb) (cong₂ _+ℕb_ (toℕb∘fromℕb x) (toℕb∘fromℕb x)) ⟩
+        sucℕb (sucℕb (x +ℕb x))
+    ≡⟨ cong sucℕb (double∘sucℕb x) ⟩
+        (2+2* x)
+    ∎
+
+ℕ≅ℕb : ℕ ≅ ℕb
+ℕ≅ℕb .to = toℕb
+ℕ≅ℕb .from = fromℕb
+ℕ≅ℕb .from∘to = fromℕb∘toℕb
+ℕ≅ℕb .to∘from = toℕb∘fromℕb
 
 -- import Data.Product using (Σ; _,_; ∃; Σ-syntax; ∃-syntax)

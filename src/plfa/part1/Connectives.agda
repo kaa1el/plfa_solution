@@ -372,6 +372,22 @@ rec-Bool = ind-Bool
 +×-implies-×+ (inj₁ (x , y)) = (inj₁ x , inj₁ y)
 +×-implies-×+ (inj₂ (z , w)) = (inj₂ z , inj₂ w)
 
+_ : (⊥ + ⊤) × (⊤ + ⊥) ≅ ⊤
+_ = record {
+        to = λ { _ → tt };
+        from = λ { _ → inj₂ tt , inj₁ tt };
+        from∘to = λ { (inj₂ tt , inj₁ tt) → refl };
+        to∘from = λ { tt → refl }
+    }
+
+_ : (⊥ × ⊤) + (⊤ × ⊥) ≅ ⊥
+_ = record {
+        to = λ { (inj₁ ()); (inj₂ ()) };
+        from = λ ();
+        from∘to = λ { (inj₁ ()); (inj₂ ()) };
+        to∘from = λ ()
+    }
+
 -- import Data.Product using (_×_; proj₁; proj₂) renaming (_,_ to ⟨_,_⟩)
 -- import Data.Unit using (⊤; tt)
 -- import Data.Sum using (_⊎_; inj₁; inj₂) renaming ([_,_] to case-⊎)

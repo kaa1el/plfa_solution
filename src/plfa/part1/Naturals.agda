@@ -125,4 +125,52 @@ infixl 7 _*_
 {-# BUILTIN NATTIMES _*_ #-}
 {-# BUILTIN NATMINUS _∸_ #-}
 
+div-suc-aux : (quotient m n counter : ℕ) → ℕ
+div-suc-aux quotient m zero counter = quotient
+div-suc-aux quotient m (suc n) zero = div-suc-aux (suc quotient) m n m
+div-suc-aux quotient m (suc n) (suc counter) = div-suc-aux quotient m n counter
+
+{-# BUILTIN NATDIVSUCAUX div-suc-aux #-}
+
+-- div-suc-aux 0 2 10 2
+-- div-suc-aux 0 2 9 1
+-- div-suc-aux 0 2 8 0
+-- div-suc-aux 1 2 7 2
+-- div-suc-aux 1 2 6 1
+-- div-suc-aux 1 2 5 0
+-- div-suc-aux 2 2 4 2
+-- div-suc-aux 2 2 3 1
+-- div-suc-aux 2 2 2 0
+-- div-suc-aux 3 2 1 2
+-- div-suc-aux 3 2 0 1
+-- 3
+
+-- div-suc n m ≡ n / (suc m)
+
+div-suc : ℕ → ℕ → ℕ
+div-suc n m = div-suc-aux 0 m n m
+
+mod-suc-aux : (remainder m n counter : ℕ) → ℕ
+mod-suc-aux remainder m zero counter = remainder
+mod-suc-aux remainder m (suc n) zero = mod-suc-aux zero m n m
+mod-suc-aux remainder m (suc n) (suc counter) = mod-suc-aux (suc remainder) m n counter
+
+{-# BUILTIN NATMODSUCAUX mod-suc-aux #-}
+
+-- mod-suc-aux 0 2 10 2
+-- mod-suc-aux 1 2 9 1
+-- mod-suc-aux 2 2 8 0
+-- mod-suc-aux 0 2 7 2
+-- mod-suc-aux 1 2 6 1
+-- mod-suc-aux 2 2 5 0
+-- mod-suc-aux 0 2 4 2
+-- mod-suc-aux 1 2 3 1
+-- mod-suc-aux 2 2 2 0
+-- mod-suc-aux 0 2 1 2
+-- mod-suc-aux 1 2 0 1
+-- 1
+
+mod-suc : ℕ → ℕ → ℕ
+mod-suc n m = mod-suc-aux 0 m n m
+
 -- import Data.Nat using (ℕ; zero; suc; _+_; _*_; _^_; _∸_)
