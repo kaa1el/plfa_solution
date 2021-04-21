@@ -390,6 +390,21 @@ Can-Is-hProp (fromOne (caseI p)) (fromOne (caseI q)) = cong fromOne (One-Is-hPro
 ℕ≅ΣBinCan .from∘to = fromBin-toBin
 ℕ≅ΣBinCan .to∘from (x , p) = Σ-eq-iso .from (can-toBin-fromBin x p , Can-Is-hProp (subst Can (can-toBin-fromBin x p) (can-toBin (fromBin x))) p)
 
+Σ-Is-Prop-iso : {Z A : Set} → {P : A → Set}
+    → (to : Z → A)
+    → (from : A → Z)
+    → (from∘to : (z : Z) → from (to z) ≡ z)
+    → ({x : A} → Is-hProp (P x))
+    → (to-P : (z : Z) → P (to z))
+    → (P-to∘from : (x : A) → P x → to (from x) ≡ x)
+    → Z ≅ Σ A P
+Σ-Is-Prop-iso {P = P} f g g∘f P-Is-hProp f-P P-f∘g = record {
+        to = λ z → (f z) , (f-P z);
+        from = λ { (x , p) → g x };
+        from∘to = g∘f;
+        to∘from = λ { (x , p) → Σ-eq-iso .from (P-f∘g x p , P-Is-hProp (subst P (P-f∘g x p) (f-P (g x))) p) }
+    }
+
 -- Bonus: use encode-decode to prove Is-hSet Bin
 
 codeBin : Bin → Bin → Set
