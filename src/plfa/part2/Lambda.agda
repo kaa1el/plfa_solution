@@ -4,6 +4,7 @@ module plfa.part2.Lambda where
 
 open import Data.Bool using (T; not)
 open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Unit using (⊤; tt)
 open import Data.List using (List; _∷_; [])
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (Σ; _×_; _,_)
@@ -13,7 +14,7 @@ open import Relation.Nullary.Decidable using (⌊_⌋; False; toWitnessFalse)
 open import Relation.Nullary.Negation using (¬?)
 open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
 
-open import plfa.part1.Isomorphism using (_≅_; extensionality; Π-extensionality; _⇔_; _≲_)
+open import plfa.part1.Isomorphism using (_≅_; _≲_)
 open import plfa.part1.Quantifiers using (Is-hProp; Σ-Is-Prop-iso)
 
 -- Gordon Plotkin's Programmable Computable Functions (PCF) (1977)
@@ -58,7 +59,7 @@ ṁul = μ "*" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ żero |ṡuc
 λ̇ṡuc : Term
 λ̇ṡuc = λ̇ "n" ⇒ ṡuc "n"̇
 
--- Church numeral
+-- Church numerals
 
 żeroᶜ : Term
 żeroᶜ = λ̇ "f" ⇒ λ̇ "x" ⇒ "x"̇
@@ -66,8 +67,14 @@ żeroᶜ = λ̇ "f" ⇒ λ̇ "x" ⇒ "x"̇
 ṡucᶜ : Term
 ṡucᶜ = λ̇ "n" ⇒ λ̇ "f" ⇒ λ̇ "x" ⇒ "f"̇ · ("n"̇ · "f"̇ · "x"̇)
 
+ȯneᶜ : Term
+ȯneᶜ = λ̇ "f" ⇒ λ̇ "x" ⇒ "f"̇ · "x"̇
+
 ṫwoᶜ : Term
 ṫwoᶜ = λ̇ "f" ⇒ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇)
+
+ṫhreeᶜ : Term
+ṫhreeᶜ = λ̇ "f" ⇒ λ̇ "x" ⇒ "f"̇ · ("f"̇ · ("f"̇ · "x"̇))
 
 ȧddᶜ : Term
 ȧddᶜ = λ̇ "n" ⇒ λ̇ "m" ⇒ λ̇ "f" ⇒ λ̇ "x" ⇒ "n"̇ · "f"̇ · ("m"̇ · "f"̇ · "x"̇)
@@ -92,7 +99,7 @@ value-ṫhree : Value ṫhree
 value-ṫhree = value-ṡuc value-ṫwo
 
 -- Here we consider closed terms and functions as values,
--- there are alternative choices where variables can be considered as values as well
+-- thereʳ are alternative choices where variables can be considered as values as well
 
 -- Substitution
 
@@ -132,6 +139,25 @@ _ = refl
 
 _ : (λ̇ "y" ⇒ "y"̇) [ "x" := żero ] ≡ λ̇ "y" ⇒ "y"̇
 _ = refl
+
+infix 9 _[_:=_]′
+
+_[_≟_:=_]″ : Term → Id → Id → Term → Term
+_[_:=_]′ : Term → Id → Term → Term
+
+t [ x ≟ y := s ]″ with x ≟ y
+... | no _ = t [ y := s ]′
+... | yes _ = t
+
+(x ̇) [ y := s ]′ with x ≟ y
+... | no _ = x ̇
+... | yes _ = s
+(λ̇ x ⇒ t) [ y := s ]′ = λ̇ x ⇒ t [ x ≟ y := s ]″
+(t₁ · t₂) [ y := s ]′ = t₁ [ y := s ]′ · t₂ [ y := s ]′
+(μ x ⇒ t) [ y := s ]′ = μ x ⇒  t [ x ≟ y := s ]″
+żero [ y := s ]′ = żero
+(ṡuc t) [ y := s ]′ = ṡuc (t [ y := s ]′)
+case t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ]′ = case (t [ y := s ]′) [żero⇒ (t₁ [ y := s ]′) |ṡuc x ⇒ (t₂ [ x ≟ y := s ]″) ]
 
 -- Reduction (call by value) (small-step operational semantics)
 
@@ -195,8 +221,8 @@ trans-⟶⋆ : {t s r : Term}
     → t ⟶⋆ s
     → s ⟶⋆ r
     → t ⟶⋆ r
-trans-⟶⋆ (_ ∎) q = q
-trans-⟶⋆ (t ⟶⟨ x ⟩ p) q = t ⟶⟨ x ⟩ trans-⟶⋆ p q
+trans-⟶⋆ (_ ∎) qs = qs
+trans-⟶⋆ (t ⟶⟨ p ⟩ ps) qs = t ⟶⟨ p ⟩ trans-⟶⋆ ps qs
 
 -- alternative definition (not initial (least)):
 
@@ -222,35 +248,35 @@ data _⟶⋆′_ : Term → Term → Set where
         to : {t s : Term}
             → t ⟶⋆ s → t ⟶⋆′ s
         to {t} {.t} (.t ∎) = refl′
-        to {t} {s} (.t ⟶⟨ x ⟩ p) = trans′ (step′ x) (to p)
+        to {t} {s} (.t ⟶⟨ p ⟩ ps) = trans′ (step′ p) (to ps)
 
         from : {t s : Term}
             → t ⟶⋆′ s → t ⟶⋆ s
-        from {t} {s} (step′ x) = t ⟶⟨ x ⟩ (s ∎)
+        from {t} {s} (step′ p) = t ⟶⟨ p ⟩ (s ∎)
         from {t} {.t} refl′ = t ∎
-        from (trans′ p q) = trans-⟶⋆ (from p) (from q)
+        from (trans′ ps qs) = trans-⟶⋆ (from ps) (from qs)
 
         from∘to : {t s : Term}
-            → (p : t ⟶⋆ s) → from (to p) ≡ p
+            → (ps : t ⟶⋆ s) → from (to ps) ≡ ps
         from∘to (_ ∎) = refl
-        from∘to {t} (_ ⟶⟨ x ⟩ p) = cong (t ⟶⟨ x ⟩_) (from∘to p)
+        from∘to {t} (_ ⟶⟨ p ⟩ ps) = cong (t ⟶⟨ p ⟩_) (from∘to ps)
 
         -- to∘from : {t s : Term}
-        --     → (p : t ⟶⋆′ s) → to (from p) ≡ p
-        -- to∘from (step′ x) = ?
+        --     → (ps : t ⟶⋆′ s) → to (from ps) ≡ ps
+        -- to∘from (step′ p) = ?
         -- to∘from refl′ = refl
-        -- to∘from (trans′ p q) = ?
+        -- to∘from (trans′ ps qs) = ?
 
 -- ⟶⋆′ is not isomorphic to ⟶⋆ because it has non-canonical terms
--- canonical terms are those in the form of trans′ (step′ x1) (trans′ (step′ x2) ... refl′)
+-- canonical terms are those in the form of trans′ (step′ p1) (trans′ (step′ p2) ... refl′)
 
 data Is-Canonical : {t s : Term} → t ⟶⋆′ s → Set where
     refl′-Is-Canonical : {t : Term}
         → Is-Canonical (refl′ {t})
     trans′-Is-Canonical : {t s r : Term}
-        → (x : t ⟶ s) → (p : s ⟶⋆′ r)
-        → Is-Canonical p
-        → Is-Canonical (trans′ (step′ x) p)
+        → (p : t ⟶ s) → (ps : s ⟶⋆′ r)
+        → Is-Canonical ps
+        → Is-Canonical (trans′ (step′ p) ps)
 
 ⟶⋆≅Σ⟶⋆′Is-Canonical : {t s : Term}
     → t ⟶⋆ s ≅ Σ (t ⟶⋆′ s) Is-Canonical
@@ -259,36 +285,36 @@ data Is-Canonical : {t s : Term} → t ⟶⋆′ s → Set where
         to : {t s : Term}
             → t ⟶⋆ s → t ⟶⋆′ s
         to {t} {.t} (.t ∎) = refl′
-        to {t} {s} (.t ⟶⟨ x ⟩ p) = trans′ (step′ x) (to p)
+        to {t} {s} (.t ⟶⟨ p ⟩ ps) = trans′ (step′ p) (to ps)
 
         from : {t s : Term}
             → t ⟶⋆′ s → t ⟶⋆ s
-        from {t} {s} (step′ x) = t ⟶⟨ x ⟩ (s ∎)
+        from {t} {s} (step′ p) = t ⟶⟨ p ⟩ (s ∎)
         from {t} {.t} refl′ = t ∎
-        from (trans′ p q) = trans-⟶⋆ (from p) (from q)
+        from (trans′ ps qs) = trans-⟶⋆ (from ps) (from qs)
 
         from∘to : {t s : Term}
             → (p : t ⟶⋆ s) → from (to p) ≡ p
         from∘to (_ ∎) = refl
-        from∘to {t} (_ ⟶⟨ x ⟩ p) = cong (t ⟶⟨ x ⟩_) (from∘to p)
+        from∘to {t} (_ ⟶⟨ p ⟩ ps) = cong (t ⟶⟨ p ⟩_) (from∘to ps)
 
-        Is-Canonical-Is-hProp : {t s : Term} → {p : t ⟶⋆′ s}
-            → Is-hProp (Is-Canonical p)
+        Is-Canonical-Is-hProp : {t s : Term} → {ps : t ⟶⋆′ s}
+            → Is-hProp (Is-Canonical ps)
         Is-Canonical-Is-hProp refl′-Is-Canonical refl′-Is-Canonical = refl
-        Is-Canonical-Is-hProp (trans′-Is-Canonical x p u) (trans′-Is-Canonical .x .p v) = cong (trans′-Is-Canonical x p) (Is-Canonical-Is-hProp u v)
+        Is-Canonical-Is-hProp (trans′-Is-Canonical p ps u) (trans′-Is-Canonical .p .ps v) = cong (trans′-Is-Canonical p ps) (Is-Canonical-Is-hProp u v)
 
         to-Is-Canonical : {t s : Term}
-            → (p : t ⟶⋆ s)
-            → Is-Canonical (to p)
+            → (ps : t ⟶⋆ s)
+            → Is-Canonical (to ps)
         to-Is-Canonical (_ ∎) = refl′-Is-Canonical
-        to-Is-Canonical (_ ⟶⟨ x ⟩ p) = trans′-Is-Canonical x (to p) (to-Is-Canonical p)
+        to-Is-Canonical (_ ⟶⟨ p ⟩ ps) = trans′-Is-Canonical p (to ps) (to-Is-Canonical ps)
 
         Is-Canonical→to∘from : {t s : Term}
-            → (p : t ⟶⋆′ s)
-            → Is-Canonical p
-            → to (from p) ≡ p
+            → (ps : t ⟶⋆′ s)
+            → Is-Canonical ps
+            → to (from ps) ≡ ps
         Is-Canonical→to∘from .refl′ refl′-Is-Canonical = refl
-        Is-Canonical→to∘from .(trans′ (step′ x) p) (trans′-Is-Canonical x p u) = cong (trans′ (step′ x)) (Is-Canonical→to∘from p u)
+        Is-Canonical→to∘from .(trans′ (step′ p) ps) (trans′-Is-Canonical p ps u) = cong (trans′ (step′ p)) (Is-Canonical→to∘from ps u)
 
 _ : ṫwoᶜ · λ̇ṡuc · żero ⟶⋆ ṡuc ṡuc żero
 _ =
@@ -411,18 +437,18 @@ infix 4 _∋_⦂_
 data _∋_⦂_ : Context → Id → Type → Set where
     here : {Γ : Context} → {x : Id} → {A : Type}
         → Γ , x ⦂ A ∋ x ⦂ A
-    there-raw : {Γ : Context} → {x y : Id} → {A B : Type}
+    there : {Γ : Context} → {x y : Id} → {A B : Type}
         → x ≢ y
         → Γ ∋ x ⦂ A
         → Γ , y ⦂ B ∋ x ⦂ A
 
--- there using reflection
+-- thereʳ using reflection
 
-there : {Γ : Context} → {x y : Id} → {A B : Type}
+thereʳ : {Γ : Context} → {x y : Id} → {A B : Type}
         → {proof : False (x ≟ y)}
         → Γ ∋ x ⦂ A
         → Γ , y ⦂ B ∋ x ⦂ A
-there {proof = proof} lookup = there-raw (toWitnessFalse proof) lookup
+thereʳ {proof = proof} lookup = there (toWitnessFalse proof) lookup
 
 -- Typing judgement
 
@@ -453,21 +479,29 @@ data _⊢_⦂_ : Context → Term → Type → Set where
         → Γ , x ⦂ A ⊢ t ⦂ A
         → Γ ⊢ (μ x ⇒ t) ⦂ A -- μ-intro, the fixpoint operator, can view μ : (A → A) → A
 
+⊢ȯne : {Γ : Context}
+    → Γ ⊢ ȯne ⦂ ℕ̇
+⊢ȯne = ⊢ṡuc ⊢żero
+
 ⊢ṫwo : {Γ : Context}
     → Γ ⊢ ṫwo ⦂ ℕ̇
 ⊢ṫwo = ⊢ṡuc (⊢ṡuc ⊢żero)
 
+⊢ṫhree : {Γ : Context}
+    → Γ ⊢ ṫhree ⦂ ℕ̇
+⊢ṫhree = ⊢ṡuc (⊢ṡuc (⊢ṡuc ⊢żero))
+
 ⊢ȧdd : {Γ : Context}
     → Γ ⊢ ȧdd ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
 ⊢ȧdd = ⊢μ (⊢λ̇ (⊢λ̇ (⊢case
-    (⊢lookup (there here))
+    (⊢lookup (thereʳ here))
     (⊢lookup here)
     (⊢ṡuc
         (⊢·
             (⊢·
-                (⊢lookup (there (there (there here))))
+                (⊢lookup (thereʳ (thereʳ (thereʳ here))))
                 (⊢lookup here))
-            (⊢lookup (there here)))))))
+            (⊢lookup (thereʳ here)))))))
 
 ⊢2+2 : ∅ ⊢ ȧdd · ṫwo · ṫwo ⦂ ℕ̇
 ⊢2+2 = ⊢· (⊢· ⊢ȧdd ⊢ṫwo) ⊢ṫwo
@@ -475,21 +509,29 @@ data _⊢_⦂_ : Context → Term → Type → Set where
 Church : Type → Type
 Church A = (A ⇒ A) ⇒ A ⇒ A
 
+⊢ȯneᶜ : {Γ : Context} → {A : Type}
+    → Γ ⊢ ȯneᶜ ⦂ Church A
+⊢ȯneᶜ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢lookup here)))
+
 ⊢ṫwoᶜ : {Γ : Context} → {A : Type}
     → Γ ⊢ ṫwoᶜ ⦂ Church A
-⊢ṫwoᶜ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (there here)) (⊢· (⊢lookup (there here)) (⊢lookup here))))
+⊢ṫwoᶜ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here))))
+
+⊢ṫhreeᶜ : {Γ : Context} → {A : Type}
+    → Γ ⊢ ṫhreeᶜ ⦂ Church A
+⊢ṫhreeᶜ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here)))))
 
 ⊢ȧddᶜ : {Γ : Context} → {A : Type}
     → Γ ⊢ ȧddᶜ ⦂ Church A ⇒ Church A ⇒ Church A
 ⊢ȧddᶜ = ⊢λ̇ (⊢λ̇ (⊢λ̇ (⊢λ̇
     (⊢·
         (⊢·
-            (⊢lookup (there (there (there here))))
-            (⊢lookup (there here)))
+            (⊢lookup (thereʳ (thereʳ (thereʳ here))))
+            (⊢lookup (thereʳ here)))
         (⊢·
             (⊢·
-                (⊢lookup (there (there here)))
-                (⊢lookup (there here)))
+                (⊢lookup (thereʳ (thereʳ here)))
+                (⊢lookup (thereʳ here)))
             (⊢lookup here))))))
 
 ⊢λ̇ṡuc : {Γ : Context}
@@ -502,13 +544,13 @@ Church A = (A ⇒ A) ⇒ A ⇒ A
 lookup-injective : {Γ : Context} → {x y : Id} → {A B : Type}
     → Γ ∋ x ⦂ A → Γ ∋ y ⦂ B → x ≡ y → A ≡ B
 lookup-injective here here p = refl
-lookup-injective here (there-raw g lookup2) refl = ⊥-elim (g refl)
-lookup-injective (there-raw f lookup1) here refl = ⊥-elim (f refl)
-lookup-injective (there-raw f lookup1) (there-raw g lookup2) p = lookup-injective lookup1 lookup2 p
+lookup-injective here (there g lookup2) refl = ⊥-elim (g refl)
+lookup-injective (there f lookup1) here refl = ⊥-elim (f refl)
+lookup-injective (there f lookup1) (there g lookup2) p = lookup-injective lookup1 lookup2 p
 
 -- notable discovery: if we write
 -- → Γ ∋ x ⦂ A → Γ ∋ x ⦂ B → A ≡ B
--- instead, then the unification would fail because axiom-K is disabled, i.e., cannot pattern match refl on x ≡ x
+-- instead, then the unification would fail if axiom-K is disabled, i.e., we cannot pattern match refl on x ≡ x
 
 nope₁ : {A : Type} → ¬ (∅ ⊢ żero · ṡuc żero ⦂ A)
 nope₁ (⊢· () _)
@@ -520,22 +562,28 @@ nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-in
 ⊢ṁul : {Γ : Context}
     → Γ ⊢ ṁul ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
 ⊢ṁul = ⊢μ (⊢λ̇ (⊢λ̇ (⊢case
-    (⊢lookup (there here))
+    (⊢lookup (thereʳ here))
     ⊢żero
     (⊢·
         (⊢·
             ⊢ȧdd
-            (⊢lookup (there here)))
+            (⊢lookup (thereʳ here)))
         (⊢·
             (⊢·
-                (⊢lookup (there (there (there here))))
+                (⊢lookup (thereʳ (thereʳ (thereʳ here))))
                 (⊢lookup here))
-            (⊢lookup (there here)))))))
+            (⊢lookup (thereʳ here)))))))
 
 ⊢ṁulᶜ : {Γ : Context} → {A : Type}
     → Γ ⊢ ṁulᶜ ⦂ Church A ⇒ Church A ⇒ Church A
 ⊢ṁulᶜ = ⊢λ̇ (⊢λ̇ (⊢λ̇ (⊢·
-    (⊢lookup (there (there here)))
+    (⊢lookup (thereʳ (thereʳ here)))
     (⊢·
-        (⊢lookup (there here))
+        (⊢lookup (thereʳ here))
         (⊢lookup here)))))
+
+⊢2*2 : ∅ ⊢ ṁul · ṫwo · ṫwo ⦂ ℕ̇
+⊢2*2 = ⊢· (⊢· ⊢ṁul ⊢ṫwo) ⊢ṫwo
+
+⊢2*2ᶜ : ∅ ⊢ ṁulᶜ · ṫwoᶜ · ṫwoᶜ · λ̇ṡuc · żero ⦂ ℕ̇
+⊢2*2ᶜ = ⊢· (⊢· (⊢· (⊢· ⊢ṁulᶜ ⊢ṫwoᶜ) ⊢ṫwoᶜ) ⊢λ̇ṡuc) ⊢żero

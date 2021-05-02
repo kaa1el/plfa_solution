@@ -106,6 +106,11 @@ data Color : Set where
         to∘from = λ { (x , (y , z)) → refl }
     }
 
+-- _×_ is a functor
+
+_map-×_ : {A B C D : Set} → (A → B) → (C → D) → (A × C) → (B × D)
+(f map-× g) (x , y) = f x , g y
+
 open _≅_
 
 ⇔≅× : {A B : Set} → A ⇔ B ≅ (A → B) × (B → A)
@@ -215,6 +220,10 @@ uniq-+ h (inj₂ _) = refl
 +-assoc .to∘from (inj₁ x) = refl
 +-assoc .to∘from (inj₂ (inj₁ y)) = refl
 +-assoc .to∘from (inj₂ (inj₂ z)) = refl
+
+_map-+_ : {A B C D : Set} → (A → B) → (C → D) → (A + C) → (B + D)
+(f map-+ g) (inj₁ x) = inj₁ (f x)
+(f map-+ g) (inj₂ y) = inj₂ (g y)
 
 data ⊥ : Set where
 
