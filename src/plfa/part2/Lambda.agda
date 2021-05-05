@@ -56,6 +56,9 @@ ȧdd = μ "+" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ "m"̇ |ṡuc 
 ṁul : Term
 ṁul = μ "*" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ żero |ṡuc "n" ⇒ ȧdd · "m"̇ · ("*"̇ · "n"̇ · "m"̇) ]
 
+ėxp : Term
+ėxp = μ "^" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ case "m"̇ [żero⇒ ȯne |ṡuc "m" ⇒ ṁul · "n"̇ · ("^"̇ · "n"̇ · "m"̇) ]
+
 λ̇ṡuc : Term
 λ̇ṡuc = λ̇ "n" ⇒ ṡuc "n"̇
 
@@ -81,6 +84,9 @@ ȧddᶜ = λ̇ "n" ⇒ λ̇ "m" ⇒ λ̇ "f" ⇒ λ̇ "x" ⇒ "n"̇ · "f"̇ ·
 
 ṁulᶜ : Term
 ṁulᶜ = λ̇ "n" ⇒ λ̇ "m" ⇒ λ̇ "f" ⇒ "n"̇ · ("m"̇ · "f"̇)
+
+ėxpᶜ : Term
+ėxpᶜ = λ̇ "n" ⇒ λ̇ "m" ⇒ "m"̇ · "n"̇
 
 -- Values
 
@@ -161,7 +167,7 @@ case t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ]′ = case (t [ y := s ]′
 
 -- Reduction (call by value) (small-step operational semantics)
 
-infix 4 _⟶_
+infix 2 _⟶_
 
 data _⟶_ : Term → Term → Set where
     ξ-·₁ : {t t′ s : Term} -- ξ's are compatibility rules
@@ -215,7 +221,7 @@ data _⟶⋆_ : Term → Term → Set where
 begin_ : {t s : Term}
     → t ⟶⋆ s
     → t ⟶⋆ s
-begin p = p
+begin ps = ps
 
 trans-⟶⋆ : {t s r : Term}
     → t ⟶⋆ s
@@ -336,15 +342,15 @@ _ =
         ȧdd · ṫwo · ṫwo
     ⟶⟨ ξ-·₁ (ξ-·₁ β-μ) ⟩
         (λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo · ṫwo
-    ⟶⟨ ξ-·₁ (β-λ̇ (value-ṫwo)) ⟩
+    ⟶⟨ ξ-·₁ (β-λ̇ value-ṫwo) ⟩
         (λ̇ "m" ⇒ case ṫwo [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo
-    ⟶⟨ β-λ̇ (value-ṫwo) ⟩
+    ⟶⟨ β-λ̇ value-ṫwo ⟩
         case ṫwo [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ]
-    ⟶⟨ β-ṡuc (value-ȯne) ⟩
+    ⟶⟨ β-ṡuc value-ȯne ⟩
         ṡuc (ȧdd · ȯne · ṫwo)
     ⟶⟨ ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ)) ⟩
         ṡuc ((λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ȯne · ṫwo)
-    ⟶⟨ ξ-ṡuc (ξ-·₁ (β-λ̇ (value-ȯne))) ⟩
+    ⟶⟨ ξ-ṡuc (ξ-·₁ (β-λ̇ value-ȯne)) ⟩
         ṡuc ((λ̇ "m" ⇒ case ȯne [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo)
     ⟶⟨ ξ-ṡuc (β-λ̇ value-ṫwo) ⟩
         ṡuc (case ȯne [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ])
@@ -479,6 +485,24 @@ data _⊢_⦂_ : Context → Term → Type → Set where
         → Γ , x ⦂ A ⊢ t ⦂ A
         → Γ ⊢ (μ x ⇒ t) ⦂ A -- μ-intro, the fixpoint operator, can view μ : (A → A) → A
 
+_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "x"̇ ⦂ ℕ̇
+_ = ⊢lookup here
+
+_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ ⦂ ℕ̇ ⇒ ℕ̇
+_ = ⊢lookup (thereʳ here)
+
+_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ · "x"̇ ⦂ ℕ̇
+_ = ⊢· (⊢lookup (thereʳ here)) (⊢lookup here)
+
+_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇
+_ = ⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here))
+
+_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ ⊢ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇ ⇒ ℕ̇
+_ = ⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here)))
+
+_ : ∅ ⊢ λ̇ "f" ⇒ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ (ℕ̇ ⇒ ℕ̇) ⇒ ℕ̇ ⇒ ℕ̇
+_ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here))))
+
 ⊢ȯne : {Γ : Context}
     → Γ ⊢ ȯne ⦂ ℕ̇
 ⊢ȯne = ⊢ṡuc ⊢żero
@@ -507,7 +531,7 @@ data _⊢_⦂_ : Context → Term → Type → Set where
 ⊢2+2 = ⊢· (⊢· ⊢ȧdd ⊢ṫwo) ⊢ṫwo
 
 Church : Type → Type
-Church A = (A ⇒ A) ⇒ A ⇒ A
+Church A = (A ⇒ A) ⇒ (A ⇒ A)
 
 ⊢ȯneᶜ : {Γ : Context} → {A : Type}
     → Γ ⊢ ȯneᶜ ⦂ Church A
@@ -587,3 +611,34 @@ nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-in
 
 ⊢2*2ᶜ : ∅ ⊢ ṁulᶜ · ṫwoᶜ · ṫwoᶜ · λ̇ṡuc · żero ⦂ ℕ̇
 ⊢2*2ᶜ = ⊢· (⊢· (⊢· (⊢· ⊢ṁulᶜ ⊢ṫwoᶜ) ⊢ṫwoᶜ) ⊢λ̇ṡuc) ⊢żero
+
+⊢ėxp : {Γ : Context}
+    → Γ ⊢ ėxp ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
+⊢ėxp = ⊢μ (⊢λ̇ (⊢λ̇ (⊢case
+    (⊢lookup here)
+    ⊢ȯne
+    (⊢·
+        (⊢·
+            ⊢ṁul
+            (⊢lookup (thereʳ (thereʳ here))))
+        (⊢·
+            (⊢·
+                (⊢lookup (thereʳ (thereʳ (thereʳ here))))
+                (⊢lookup (thereʳ (thereʳ here))))
+            (⊢lookup here))))))
+
+_ : {A : Type}
+    → Church (A ⇒ A) ≡ Church A ⇒ Church A
+_ = refl
+
+⊢ėxpᶜ : {Γ : Context} → {A : Type}
+    → Γ ⊢ ėxpᶜ ⦂ Church A ⇒ Church (A ⇒ A) ⇒ Church A
+⊢ėxpᶜ = ⊢λ̇ (⊢λ̇ (⊢·
+    (⊢lookup here)
+    (⊢lookup (thereʳ here))))
+
+⊢2^2 : ∅ ⊢ ėxp · ṫwo · ṫwo ⦂ ℕ̇
+⊢2^2 = ⊢· (⊢· ⊢ėxp ⊢ṫwo) ⊢ṫwo
+
+⊢2^2ᶜ : ∅ ⊢ ėxpᶜ · ṫwoᶜ · ṫwoᶜ · λ̇ṡuc · żero ⦂ ℕ̇
+⊢2^2ᶜ = ⊢· (⊢· (⊢· (⊢· ⊢ėxpᶜ ⊢ṫwoᶜ) ⊢ṫwoᶜ) ⊢λ̇ṡuc) ⊢żero
