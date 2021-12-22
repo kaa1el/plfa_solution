@@ -39,7 +39,7 @@ data Term : Set where
     μ_⇒_ : Id → Term → Term
     żero : Term
     ṡuc_ : Term → Term
-    case_[żero⇒_|ṡuc_⇒_] : Term → Term → Id → Term → Term
+    caseℕ̇_[żero⇒_|ṡuc_⇒_] : Term → Term → Id → Term → Term
 
 ȯne : Term
 ȯne = ṡuc żero
@@ -51,13 +51,13 @@ ṫhree : Term
 ṫhree = ṡuc ṫwo
 
 ȧdd : Term
-ȧdd = μ "+" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc ("+"̇ · "n"̇ · "m"̇) ]
+ȧdd = μ "+" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc ("+"̇ · "n"̇ · "m"̇) ]
 
 ṁul : Term
-ṁul = μ "*" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ żero |ṡuc "n" ⇒ ȧdd · "m"̇ · ("*"̇ · "n"̇ · "m"̇) ]
+ṁul = μ "*" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ żero |ṡuc "n" ⇒ ȧdd · "m"̇ · ("*"̇ · "n"̇ · "m"̇) ]
 
 ėxp : Term
-ėxp = μ "^" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ case "m"̇ [żero⇒ ȯne |ṡuc "m" ⇒ ṁul · "n"̇ · ("^"̇ · "n"̇ · "m"̇) ]
+ėxp = μ "^" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "m"̇ [żero⇒ ȯne |ṡuc "m" ⇒ ṁul · "n"̇ · ("^"̇ · "n"̇ · "m"̇) ]
 
 λ̇ṡuc : Term
 λ̇ṡuc = λ̇ "n" ⇒ ṡuc "n"̇
@@ -113,6 +113,9 @@ infix 9 _[_:=_]
 
 -- Here the term s is assumed to be closed, otherwise the definition would require
 -- renaming of bounded variables
+-- e.g., (λ̇ "f" ⇒ "f"̇ · "x"̇) [ "x" := ("f"̇ · żero)] should yield
+-- λ̇ "g" ⇒ "g"̇ · ("f"̇ · żero) by renaming "f" to "g"
+-- but the following definition would yield the incorrect λ̇ "f" ⇒ "f"̇ · ("f"̇ · żero)
 
 _[_:=_] : Term → Id → Term → Term
 (x ̇) [ y := s ] with x ≟ y
@@ -127,9 +130,9 @@ _[_:=_] : Term → Id → Term → Term
 ... | yes _ = μ x ⇒ t
 żero [ y := s ] = żero
 (ṡuc t) [ y := s ] = ṡuc (t [ y := s ])
-case t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ] with x ≟ y
-... | no _ = case (t [ y := s ]) [żero⇒ (t₁ [ y := s ]) |ṡuc x ⇒ (t₂ [ y := s ]) ]
-... | yes _ = case (t [ y := s ]) [żero⇒ (t₁ [ y := s ]) |ṡuc x ⇒ t₂ ]
+caseℕ̇ t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ] with x ≟ y
+... | no _ = caseℕ̇ (t [ y := s ]) [żero⇒ (t₁ [ y := s ]) |ṡuc x ⇒ (t₂ [ y := s ]) ]
+... | yes _ = caseℕ̇ (t [ y := s ]) [żero⇒ (t₁ [ y := s ]) |ṡuc x ⇒ t₂ ]
 
 _ : (λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇)) [ "f" := ṡucᶜ ] ≡ λ̇ "x" ⇒ ṡucᶜ · (ṡucᶜ · "x"̇)
 _ = refl
@@ -163,13 +166,23 @@ t [ x ≟ y := s ]″ with x ≟ y
 (μ x ⇒ t) [ y := s ]′ = μ x ⇒  t [ x ≟ y := s ]″
 żero [ y := s ]′ = żero
 (ṡuc t) [ y := s ]′ = ṡuc (t [ y := s ]′)
-case t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ]′ = case (t [ y := s ]′) [żero⇒ (t₁ [ y := s ]′) |ṡuc x ⇒ (t₂ [ x ≟ y := s ]″) ]
+caseℕ̇ t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ]′ = caseℕ̇ (t [ y := s ]′) [żero⇒ (t₁ [ y := s ]′) |ṡuc x ⇒ (t₂ [ x ≟ y := s ]″) ]
 
 -- Reduction (call by value) (small-step operational semantics)
 
 infix 2 _⟶_
 
 data _⟶_ : Term → Term → Set where
+    β-λ̇ : {x : Id} → {t s : Term} -- call by value reduction (another choice is call by name)
+        → Value s
+        → (λ̇ x ⇒ t) · s ⟶ t [ x := s ]
+    β-żero : {x : Id} → {s r : Term}
+        → caseℕ̇ żero [żero⇒ s |ṡuc x ⇒ r ] ⟶ s
+    β-ṡuc : {x : Id} → {t s r : Term}
+        → Value t
+        → caseℕ̇ (ṡuc t) [żero⇒ s |ṡuc x ⇒ r ] ⟶ r [ x := t ]
+    β-μ : {x : Id} → {t : Term}
+        → μ x ⇒ t ⟶ t [ x := μ x ⇒ t ]
     ξ-·₁ : {t t′ s : Term} -- ξ's are compatibility rules
         → t ⟶ t′
         → t · s ⟶ t′ · s
@@ -180,19 +193,9 @@ data _⟶_ : Term → Term → Set where
     ξ-ṡuc : {t t′ : Term}
         → t ⟶ t′
         → ṡuc t ⟶ ṡuc t′
-    ξ-case : {x : Id} → {t t′ s r : Term}
+    ξ-caseℕ̇ : {x : Id} → {t t′ s r : Term}
         → t ⟶ t′
-        → case t [żero⇒ s |ṡuc x ⇒ r ] ⟶ case t′ [żero⇒ s |ṡuc x ⇒ r ]
-    β-λ̇ : {x : Id} → {t s : Term} -- call by value reduction (another choice is call by name)
-        → Value s
-        → (λ̇ x ⇒ t) · s ⟶ t [ x := s ]
-    β-żero : {x : Id} → {s r : Term}
-        → case żero [żero⇒ s |ṡuc x ⇒ r ] ⟶ s
-    β-ṡuc :  {x : Id} → {t s r : Term}
-        → Value t
-        → case (ṡuc t) [żero⇒ s |ṡuc x ⇒ r ] ⟶ r [ x := t ]
-    β-μ : {x : Id} → {t : Term}
-        → μ x ⇒ t ⟶ t [ x := μ x ⇒ t ]
+        → caseℕ̇ t [żero⇒ s |ṡuc x ⇒ r ] ⟶ caseℕ̇ t′ [żero⇒ s |ṡuc x ⇒ r ]
 
 _ : (λ̇ "x" ⇒ "x"̇) · (λ̇ "x" ⇒ "x"̇) ⟶ (λ̇ "x" ⇒ "x"̇)
 _ = β-λ̇ value-λ̇
@@ -341,27 +344,27 @@ _ =
     begin
         ȧdd · ṫwo · ṫwo
     ⟶⟨ ξ-·₁ (ξ-·₁ β-μ) ⟩
-        (λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo · ṫwo
+        (λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo · ṫwo
     ⟶⟨ ξ-·₁ (β-λ̇ value-ṫwo) ⟩
-        (λ̇ "m" ⇒ case ṫwo [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo
+        (λ̇ "m" ⇒ caseℕ̇ ṫwo [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo
     ⟶⟨ β-λ̇ value-ṫwo ⟩
-        case ṫwo [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ]
+        caseℕ̇ ṫwo [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ]
     ⟶⟨ β-ṡuc value-ȯne ⟩
         ṡuc (ȧdd · ȯne · ṫwo)
     ⟶⟨ ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ)) ⟩
-        ṡuc ((λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ȯne · ṫwo)
+        ṡuc ((λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ȯne · ṫwo)
     ⟶⟨ ξ-ṡuc (ξ-·₁ (β-λ̇ value-ȯne)) ⟩
-        ṡuc ((λ̇ "m" ⇒ case ȯne [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo)
+        ṡuc ((λ̇ "m" ⇒ caseℕ̇ ȯne [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo)
     ⟶⟨ ξ-ṡuc (β-λ̇ value-ṫwo) ⟩
-        ṡuc (case ȯne [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ])
+        ṡuc (caseℕ̇ ȯne [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ])
     ⟶⟨ ξ-ṡuc (β-ṡuc value-żero) ⟩
         ṡuc (ṡuc (ȧdd · żero · ṫwo))
     ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ))) ⟩
-        ṡuc (ṡuc ((λ̇ "n" ⇒ λ̇ "m" ⇒ case "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · żero · ṫwo))
+        ṡuc (ṡuc ((λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · żero · ṫwo))
     ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (β-λ̇ value-żero))) ⟩
-        ṡuc (ṡuc ((λ̇ "m" ⇒ case żero [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo))
+        ṡuc (ṡuc ((λ̇ "m" ⇒ caseℕ̇ żero [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo))
     ⟶⟨ ξ-ṡuc (ξ-ṡuc (β-λ̇ value-ṫwo)) ⟩
-        ṡuc (ṡuc (case żero [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ]))
+        ṡuc (ṡuc (caseℕ̇ żero [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ]))
     ⟶⟨ ξ-ṡuc (ξ-ṡuc β-żero) ⟩
         ṡuc ṡuc ṡuc ṡuc żero
     ∎
@@ -444,7 +447,7 @@ data _∋_⦂_ : Context → Id → Type → Set where
     here : {Γ : Context} → {x : Id} → {A : Type}
         → Γ , x ⦂ A ∋ x ⦂ A
     there : {Γ : Context} → {x y : Id} → {A B : Type}
-        → x ≢ y
+        → x ≢ y -- this condition ensures x is not shadowed by any other x to its left side, e.g., x ⦂ A , x ⦂ B ∋ x ⦂ A but not x ⦂ A , x ⦂ B ∋ x ⦂ B
         → Γ ∋ x ⦂ A
         → Γ , y ⦂ B ∋ x ⦂ A
 
@@ -460,7 +463,7 @@ thereʳ {proof = proof} lookup = there (toWitnessFalse proof) lookup
 
 infix 4 _⊢_⦂_
 
-data _⊢_⦂_ : Context → Term → Type → Set where
+data _⊢_⦂_ : Context → Term → Type → Set where
     ⊢lookup : {Γ : Context} → {x : Id} → {A : Type}
         → Γ ∋ x ⦂ A
         → Γ ⊢ x ̇ ⦂ A -- from context lookup, or picking a variable
@@ -476,11 +479,11 @@ data _⊢_⦂_ : Context → Term → Type → Set where
     ⊢ṡuc : {Γ : Context} → {t : Term}
         → Γ ⊢ t ⦂ ℕ̇
         → Γ ⊢ ṡuc t ⦂ ℕ̇ -- ℕ-intro-suc
-    ⊢case : {Γ : Context} → {x : Id} → {t s r : Term} → {A : Type}
+    ⊢caseℕ̇ : {Γ : Context} → {x : Id} → {t s r : Term} → {A : Type}
         → Γ ⊢ t ⦂ ℕ̇
         → Γ ⊢ s ⦂ A
         → Γ , x ⦂ ℕ̇ ⊢ r ⦂ A
-        → Γ ⊢ case t [żero⇒ s |ṡuc x ⇒ r ] ⦂ A -- ℕ-elim
+        → Γ ⊢ caseℕ̇ t [żero⇒ s |ṡuc x ⇒ r ] ⦂ A -- ℕ-elim
     ⊢μ : {Γ : Context} → {x : Id} → {t : Term} → {A : Type}
         → Γ , x ⦂ A ⊢ t ⦂ A
         → Γ ⊢ (μ x ⇒ t) ⦂ A -- μ-intro, the fixpoint operator, can view μ : (A → A) → A
@@ -517,7 +520,7 @@ _ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (there�
 
 ⊢ȧdd : {Γ : Context}
     → Γ ⊢ ȧdd ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
-⊢ȧdd = ⊢μ (⊢λ̇ (⊢λ̇ (⊢case
+⊢ȧdd = ⊢μ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
     (⊢lookup (thereʳ here))
     (⊢lookup here)
     (⊢ṡuc
@@ -585,7 +588,7 @@ nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-in
 
 ⊢ṁul : {Γ : Context}
     → Γ ⊢ ṁul ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
-⊢ṁul = ⊢μ (⊢λ̇ (⊢λ̇ (⊢case
+⊢ṁul = ⊢μ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
     (⊢lookup (thereʳ here))
     ⊢żero
     (⊢·
@@ -614,7 +617,7 @@ nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-in
 
 ⊢ėxp : {Γ : Context}
     → Γ ⊢ ėxp ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
-⊢ėxp = ⊢μ (⊢λ̇ (⊢λ̇ (⊢case
+⊢ėxp = ⊢μ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
     (⊢lookup here)
     ⊢ȯne
     (⊢·

@@ -157,7 +157,7 @@ module Classical where
     dne-implies-dm dne A B f = dne (A + B) λ g → f ((λ x → g (inj₁ x)) , λ y → g (inj₂ y))
 
     dm-implies-dne : DeMorgan → DoubleNegationElimination
-    dm-implies-dne dm A f with dm A ⊥ λ w → f (proj₁ w)
+    dm-implies-dne dm A f with dm A ⊥ (λ w → f (proj₁ w))
     ... | inj₁ x = x
 
     peirce-implies-iad : PeirceLaw → ImplicationAsDisjunction
@@ -172,7 +172,7 @@ module Classical where
     peirce-implies-dm peirce A B f = peirce (A + B) ⊥ λ g → ⊥-elim (f ((λ x → g (inj₁ x)) , (λ y → g (inj₂ y))))
 
     dm-implies-peirce : DeMorgan → PeirceLaw
-    dm-implies-peirce dm A B f with dm A ⊥ λ w → proj₁ w (f λ x → ⊥-elim (proj₁ w x))
+    dm-implies-peirce dm A B f with dm A ⊥ (λ w → proj₁ w (f λ x → ⊥-elim (proj₁ w x)))
     ... | inj₁ x = x
 
     iad-implies-dm : ImplicationAsDisjunction → DeMorgan
@@ -245,13 +245,13 @@ test f g = extensionality λ ()
 ¬⊤≅⊥ .from∘to f = extensionality λ _ → ⊥-elim (f tt)
 ¬⊤≅⊥ .to∘from ()
 
-empty-domain : {A : Set} → (⊥ → A) ≅ ⊤ -- ⊥ is the initial object
+empty-domain : {A : Set} → (⊥ → A) ≅ ⊤ -- ⊥ is the initial object
 empty-domain .to _ = tt
 empty-domain .from _ = λ ()
 empty-domain .from∘to _ = extensionality λ ()
 empty-domain .to∘from _ = refl
 
-unit-codomain :  {A : Set} → (A → ⊤) ≅ ⊤ -- ⊤ is the terminal object
+unit-codomain : {A : Set} → (A → ⊤) ≅ ⊤ -- ⊤ is the terminal object
 unit-codomain .to _ = tt
 unit-codomain .from _ _ = tt
 unit-codomain .from∘to _ = extensionality λ _ → refl

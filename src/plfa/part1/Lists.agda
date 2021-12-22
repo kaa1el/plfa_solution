@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --guardedness #-}
 
 module plfa.part1.Lists where
 

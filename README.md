@@ -2,7 +2,7 @@
 
 Solution to the exercises from Programming Language Foundations with Agda: https://plfa.github.io/
 
-Agda version: `2.6.1.3`
+Agda version: `2.6.2.1`
 
 ## Table of Contents
 

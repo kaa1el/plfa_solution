@@ -277,7 +277,7 @@ currying′ : {A B C : Set} → (A → B → C) ≅ (A × B → C)
 currying′ =
     record {
         to = λ { f → λ { (x , y) → f x y } };
-        from = λ { g → λ { x → λ { y → g (x , y) } }};
+        from = λ { g → λ { x → λ { y → g (x , y) } }};
         from∘to = λ { f → refl };
         to∘from = λ { g → extensionality λ { (x , y) → refl } }
     }
