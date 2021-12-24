@@ -25,7 +25,7 @@ Id : Set
 Id = String
 
 infix 5 λ̇_⇒_
-infix 5 μ_⇒_
+infix 5 μ̇_⇒_
 infixl 7 _·_
 infix 8 ṡuc_
 infix 9 _̇
@@ -36,7 +36,7 @@ data Term : Set where
     _̇ : Id → Term
     λ̇_⇒_ : Id → Term → Term
     _·_ : Term → Term → Term
-    μ_⇒_ : Id → Term → Term
+    μ̇_⇒_ : Id → Term → Term
     żero : Term
     ṡuc_ : Term → Term
     caseℕ̇_[żero⇒_|ṡuc_⇒_] : Term → Term → Id → Term → Term
@@ -51,13 +51,13 @@ ṫhree : Term
 ṫhree = ṡuc ṫwo
 
 ȧdd : Term
-ȧdd = μ "+" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc ("+"̇ · "n"̇ · "m"̇) ]
+ȧdd = μ̇ "+" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc ("+"̇ · "n"̇ · "m"̇) ]
 
 ṁul : Term
-ṁul = μ "*" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ żero |ṡuc "n" ⇒ ȧdd · "m"̇ · ("*"̇ · "n"̇ · "m"̇) ]
+ṁul = μ̇ "*" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ żero |ṡuc "n" ⇒ ȧdd · "m"̇ · ("*"̇ · "n"̇ · "m"̇) ]
 
 ėxp : Term
-ėxp = μ "^" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "m"̇ [żero⇒ ȯne |ṡuc "m" ⇒ ṁul · "n"̇ · ("^"̇ · "n"̇ · "m"̇) ]
+ėxp = μ̇ "^" ⇒ λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "m"̇ [żero⇒ ȯne |ṡuc "m" ⇒ ṁul · "n"̇ · ("^"̇ · "n"̇ · "m"̇) ]
 
 λ̇ṡuc : Term
 λ̇ṡuc = λ̇ "n" ⇒ ṡuc "n"̇
@@ -125,9 +125,9 @@ _[_:=_] : Term → Id → Term → Term
 ... | no _ = λ̇ x ⇒ (t [ y := s ])
 ... | yes _ = λ̇ x ⇒ t
 (t₁ · t₂) [ y := s ] = t₁ [ y := s ] · t₂ [ y := s ]
-(μ x ⇒ t) [ y := s ] with x ≟ y
-... | no _ = μ x ⇒ (t [ y := s ])
-... | yes _ = μ x ⇒ t
+(μ̇ x ⇒ t) [ y := s ] with x ≟ y
+... | no _ = μ̇ x ⇒ (t [ y := s ])
+... | yes _ = μ̇ x ⇒ t
 żero [ y := s ] = żero
 (ṡuc t) [ y := s ] = ṡuc (t [ y := s ])
 caseℕ̇ t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ] with x ≟ y
@@ -163,7 +163,7 @@ t [ x ≟ y := s ]″ with x ≟ y
 ... | yes _ = s
 (λ̇ x ⇒ t) [ y := s ]′ = λ̇ x ⇒ t [ x ≟ y := s ]″
 (t₁ · t₂) [ y := s ]′ = t₁ [ y := s ]′ · t₂ [ y := s ]′
-(μ x ⇒ t) [ y := s ]′ = μ x ⇒  t [ x ≟ y := s ]″
+(μ̇ x ⇒ t) [ y := s ]′ = μ̇ x ⇒  t [ x ≟ y := s ]″
 żero [ y := s ]′ = żero
 (ṡuc t) [ y := s ]′ = ṡuc (t [ y := s ]′)
 caseℕ̇ t [żero⇒ t₁ |ṡuc x ⇒ t₂ ] [ y := s ]′ = caseℕ̇ (t [ y := s ]′) [żero⇒ (t₁ [ y := s ]′) |ṡuc x ⇒ (t₂ [ x ≟ y := s ]″) ]
@@ -181,8 +181,8 @@ data _⟶_ : Term → Term → Set where
     β-ṡuc : {x : Id} → {t s r : Term}
         → Value t
         → caseℕ̇ (ṡuc t) [żero⇒ s |ṡuc x ⇒ r ] ⟶ r [ x := t ]
-    β-μ : {x : Id} → {t : Term}
-        → μ x ⇒ t ⟶ t [ x := μ x ⇒ t ]
+    β-μ̇ : {x : Id} → {t : Term}
+        → μ̇ x ⇒ t ⟶ t [ x := μ̇ x ⇒ t ]
     ξ-·₁ : {t t′ s : Term} -- ξ's are compatibility rules
         → t ⟶ t′
         → t · s ⟶ t′ · s
@@ -224,14 +224,14 @@ data _⟶⋆_ : Term → Term → Set where
 begin_ : {t s : Term}
     → t ⟶⋆ s
     → t ⟶⋆ s
-begin ps = ps
+begin reductions = reductions
 
 trans-⟶⋆ : {t s r : Term}
     → t ⟶⋆ s
     → s ⟶⋆ r
     → t ⟶⋆ r
-trans-⟶⋆ (_ ∎) qs = qs
-trans-⟶⋆ (t ⟶⟨ p ⟩ ps) qs = t ⟶⟨ p ⟩ trans-⟶⋆ ps qs
+trans-⟶⋆ (_ ∎) reductions = reductions
+trans-⟶⋆ (t ⟶⟨ reduction ⟩ reductions₁) reductions₂ = t ⟶⟨ reduction ⟩ trans-⟶⋆ reductions₁ reductions₂
 
 -- alternative definition (not initial (least)):
 
@@ -257,24 +257,24 @@ data _⟶⋆′_ : Term → Term → Set where
         to : {t s : Term}
             → t ⟶⋆ s → t ⟶⋆′ s
         to {t} {.t} (.t ∎) = refl′
-        to {t} {s} (.t ⟶⟨ p ⟩ ps) = trans′ (step′ p) (to ps)
+        to {t} {s} (.t ⟶⟨ reduction ⟩ reductions) = trans′ (step′ reduction) (to reductions)
 
         from : {t s : Term}
             → t ⟶⋆′ s → t ⟶⋆ s
-        from {t} {s} (step′ p) = t ⟶⟨ p ⟩ (s ∎)
+        from {t} {s} (step′ reduction) = t ⟶⟨ reduction ⟩ (s ∎)
         from {t} {.t} refl′ = t ∎
-        from (trans′ ps qs) = trans-⟶⋆ (from ps) (from qs)
+        from (trans′ reductions₁ reductions₂) = trans-⟶⋆ (from reductions₁) (from reductions₂)
 
         from∘to : {t s : Term}
-            → (ps : t ⟶⋆ s) → from (to ps) ≡ ps
+            → (reductions : t ⟶⋆ s) → from (to reductions) ≡ reductions
         from∘to (_ ∎) = refl
-        from∘to {t} (_ ⟶⟨ p ⟩ ps) = cong (t ⟶⟨ p ⟩_) (from∘to ps)
+        from∘to {t} (_ ⟶⟨ reduction ⟩ reductions) = cong (t ⟶⟨ reduction ⟩_) (from∘to reductions)
 
         -- to∘from : {t s : Term}
-        --     → (ps : t ⟶⋆′ s) → to (from ps) ≡ ps
-        -- to∘from (step′ p) = ?
+        --     → (reductions : t ⟶⋆′ s) → to (from reductions) ≡ reductions
+        -- to∘from (step′ reduction) = ?
         -- to∘from refl′ = refl
-        -- to∘from (trans′ ps qs) = ?
+        -- to∘from (trans′ reductions₁ reductions₂) = ?
 
 -- ⟶⋆′ is not isomorphic to ⟶⋆ because it has non-canonical terms
 -- canonical terms are those in the form of trans′ (step′ p1) (trans′ (step′ p2) ... refl′)
@@ -283,9 +283,9 @@ data Is-Canonical : {t s : Term} → t ⟶⋆′ s → Set where
     refl′-Is-Canonical : {t : Term}
         → Is-Canonical (refl′ {t})
     trans′-Is-Canonical : {t s r : Term}
-        → (p : t ⟶ s) → (ps : s ⟶⋆′ r)
-        → Is-Canonical ps
-        → Is-Canonical (trans′ (step′ p) ps)
+        → (reduction : t ⟶ s) → (reductions : s ⟶⋆′ r)
+        → Is-Canonical reductions
+        → Is-Canonical (trans′ (step′ reduction) reductions)
 
 ⟶⋆≅Σ⟶⋆′Is-Canonical : {t s : Term}
     → t ⟶⋆ s ≅ Σ (t ⟶⋆′ s) Is-Canonical
@@ -294,36 +294,36 @@ data Is-Canonical : {t s : Term} → t ⟶⋆′ s → Set where
         to : {t s : Term}
             → t ⟶⋆ s → t ⟶⋆′ s
         to {t} {.t} (.t ∎) = refl′
-        to {t} {s} (.t ⟶⟨ p ⟩ ps) = trans′ (step′ p) (to ps)
+        to {t} {s} (.t ⟶⟨ reduction ⟩ reductions) = trans′ (step′ reduction) (to reductions)
 
         from : {t s : Term}
             → t ⟶⋆′ s → t ⟶⋆ s
-        from {t} {s} (step′ p) = t ⟶⟨ p ⟩ (s ∎)
+        from {t} {s} (step′ reduction) = t ⟶⟨ reduction ⟩ (s ∎)
         from {t} {.t} refl′ = t ∎
-        from (trans′ ps qs) = trans-⟶⋆ (from ps) (from qs)
+        from (trans′ reductions₁ reductions₂) = trans-⟶⋆ (from reductions₁) (from reductions₂)
 
         from∘to : {t s : Term}
-            → (p : t ⟶⋆ s) → from (to p) ≡ p
+            → (reduction : t ⟶⋆ s) → from (to reduction) ≡ reduction
         from∘to (_ ∎) = refl
-        from∘to {t} (_ ⟶⟨ p ⟩ ps) = cong (t ⟶⟨ p ⟩_) (from∘to ps)
+        from∘to {t} (_ ⟶⟨ reduction ⟩ reductions) = cong (t ⟶⟨ reduction ⟩_) (from∘to reductions)
 
-        Is-Canonical-Is-hProp : {t s : Term} → {ps : t ⟶⋆′ s}
-            → Is-hProp (Is-Canonical ps)
+        Is-Canonical-Is-hProp : {t s : Term} → {reductions : t ⟶⋆′ s}
+            → Is-hProp (Is-Canonical reductions)
         Is-Canonical-Is-hProp refl′-Is-Canonical refl′-Is-Canonical = refl
-        Is-Canonical-Is-hProp (trans′-Is-Canonical p ps u) (trans′-Is-Canonical .p .ps v) = cong (trans′-Is-Canonical p ps) (Is-Canonical-Is-hProp u v)
+        Is-Canonical-Is-hProp (trans′-Is-Canonical reduction reductions is-canonical₁) (trans′-Is-Canonical .reduction .reductions is-canonical₂) = cong (trans′-Is-Canonical reduction reductions) (Is-Canonical-Is-hProp is-canonical₁ is-canonical₂)
 
         to-Is-Canonical : {t s : Term}
-            → (ps : t ⟶⋆ s)
-            → Is-Canonical (to ps)
+            → (reductions : t ⟶⋆ s)
+            → Is-Canonical (to reductions)
         to-Is-Canonical (_ ∎) = refl′-Is-Canonical
-        to-Is-Canonical (_ ⟶⟨ p ⟩ ps) = trans′-Is-Canonical p (to ps) (to-Is-Canonical ps)
+        to-Is-Canonical (_ ⟶⟨ reduction ⟩ reductions) = trans′-Is-Canonical reduction (to reductions) (to-Is-Canonical reductions)
 
         Is-Canonical→to∘from : {t s : Term}
-            → (ps : t ⟶⋆′ s)
-            → Is-Canonical ps
-            → to (from ps) ≡ ps
+            → (reductions : t ⟶⋆′ s)
+            → Is-Canonical reductions
+            → to (from reductions) ≡ reductions
         Is-Canonical→to∘from .refl′ refl′-Is-Canonical = refl
-        Is-Canonical→to∘from .(trans′ (step′ p) ps) (trans′-Is-Canonical p ps u) = cong (trans′ (step′ p)) (Is-Canonical→to∘from ps u)
+        Is-Canonical→to∘from .(trans′ (step′ reduction) reductions) (trans′-Is-Canonical reduction reductions is-canonical) = cong (trans′ (step′ reduction)) (Is-Canonical→to∘from reductions is-canonical)
 
 _ : ṫwoᶜ · λ̇ṡuc · żero ⟶⋆ ṡuc ṡuc żero
 _ =
@@ -343,7 +343,7 @@ _ : ȧdd · ṫwo · ṫwo ⟶⋆ ṡuc ṡuc ṡuc ṡuc żero
 _ =
     begin
         ȧdd · ṫwo · ṫwo
-    ⟶⟨ ξ-·₁ (ξ-·₁ β-μ) ⟩
+    ⟶⟨ ξ-·₁ (ξ-·₁ β-μ̇) ⟩
         (λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo · ṫwo
     ⟶⟨ ξ-·₁ (β-λ̇ value-ṫwo) ⟩
         (λ̇ "m" ⇒ caseℕ̇ ṫwo [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo
@@ -351,7 +351,7 @@ _ =
         caseℕ̇ ṫwo [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ]
     ⟶⟨ β-ṡuc value-ȯne ⟩
         ṡuc (ȧdd · ȯne · ṫwo)
-    ⟶⟨ ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ)) ⟩
+    ⟶⟨ ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇)) ⟩
         ṡuc ((λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ȯne · ṫwo)
     ⟶⟨ ξ-ṡuc (ξ-·₁ (β-λ̇ value-ȯne)) ⟩
         ṡuc ((λ̇ "m" ⇒ caseℕ̇ ȯne [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo)
@@ -359,7 +359,7 @@ _ =
         ṡuc (caseℕ̇ ȯne [żero⇒ ṫwo |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · ṫwo) ])
     ⟶⟨ ξ-ṡuc (β-ṡuc value-żero) ⟩
         ṡuc (ṡuc (ȧdd · żero · ṫwo))
-    ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ))) ⟩
+    ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇))) ⟩
         ṡuc (ṡuc ((λ̇ "n" ⇒ λ̇ "m" ⇒ caseℕ̇ "n"̇ [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · żero · ṫwo))
     ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (β-λ̇ value-żero))) ⟩
         ṡuc (ṡuc ((λ̇ "m" ⇒ caseℕ̇ żero [żero⇒ "m"̇ |ṡuc "n" ⇒ ṡuc (ȧdd · "n"̇ · "m"̇) ]) · ṫwo))
@@ -401,11 +401,11 @@ _ =
 
 -- Types and Contexts
 
-infixr 7 _⇒_
+infixr 7 _→̇_
 
 data Type : Set where
     ℕ̇ : Type
-    _⇒_ : Type → Type → Type
+    _→̇_ : Type → Type → Type
 
 infixl 5 _,_⦂_
 
@@ -469,9 +469,9 @@ data _⊢_⦂_ : Context → Term → Type → Set where
         → Γ ⊢ x ̇ ⦂ A -- from context lookup, or picking a variable
     ⊢λ̇ : {Γ : Context} → {x : Id} → {t : Term} → {A B : Type}
         → Γ , x ⦂ A ⊢ t ⦂ B
-        → Γ ⊢ (λ̇ x ⇒ t) ⦂ A ⇒ B -- →-intro
+        → Γ ⊢ (λ̇ x ⇒ t) ⦂ A →̇ B -- →-intro
     ⊢· : {Γ : Context} → {t s : Term} → {A B : Type}
-        → Γ ⊢ t ⦂ A ⇒ B
+        → Γ ⊢ t ⦂ A →̇ B
         → Γ ⊢ s ⦂ A
         → Γ ⊢ (t · s) ⦂ B -- →-elim
     ⊢żero : {Γ : Context}
@@ -484,26 +484,26 @@ data _⊢_⦂_ : Context → Term → Type → Set where
         → Γ ⊢ s ⦂ A
         → Γ , x ⦂ ℕ̇ ⊢ r ⦂ A
         → Γ ⊢ caseℕ̇ t [żero⇒ s |ṡuc x ⇒ r ] ⦂ A -- ℕ-elim
-    ⊢μ : {Γ : Context} → {x : Id} → {t : Term} → {A : Type}
+    ⊢μ̇ : {Γ : Context} → {x : Id} → {t : Term} → {A : Type}
         → Γ , x ⦂ A ⊢ t ⦂ A
-        → Γ ⊢ (μ x ⇒ t) ⦂ A -- μ-intro, the fixpoint operator, can view μ : (A → A) → A
+        → Γ ⊢ (μ̇ x ⇒ t) ⦂ A -- μ̇-intro, the fixpoint operator, can view μ̇ : (A → A) → A
 
-_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "x"̇ ⦂ ℕ̇
+_ : ∅ , "f" ⦂ ℕ̇ →̇ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "x"̇ ⦂ ℕ̇
 _ = ⊢lookup here
 
-_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ ⦂ ℕ̇ ⇒ ℕ̇
+_ : ∅ , "f" ⦂ ℕ̇ →̇ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ ⦂ ℕ̇ →̇ ℕ̇
 _ = ⊢lookup (thereʳ here)
 
-_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ · "x"̇ ⦂ ℕ̇
+_ : ∅ , "f" ⦂ ℕ̇ →̇ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ · "x"̇ ⦂ ℕ̇
 _ = ⊢· (⊢lookup (thereʳ here)) (⊢lookup here)
 
-_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇
+_ : ∅ , "f" ⦂ ℕ̇ →̇ ℕ̇ , "x" ⦂ ℕ̇ ⊢ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇
 _ = ⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here))
 
-_ : ∅ , "f" ⦂ ℕ̇ ⇒ ℕ̇ ⊢ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇ ⇒ ℕ̇
+_ : ∅ , "f" ⦂ ℕ̇ →̇ ℕ̇ ⊢ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇ →̇ ℕ̇
 _ = ⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here)))
 
-_ : ∅ ⊢ λ̇ "f" ⇒ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ (ℕ̇ ⇒ ℕ̇) ⇒ ℕ̇ ⇒ ℕ̇
+_ : ∅ ⊢ λ̇ "f" ⇒ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ (ℕ̇ →̇ ℕ̇) →̇ ℕ̇ →̇ ℕ̇
 _ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here))))
 
 ⊢ȯne : {Γ : Context}
@@ -519,8 +519,8 @@ _ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (there�
 ⊢ṫhree = ⊢ṡuc (⊢ṡuc (⊢ṡuc ⊢żero))
 
 ⊢ȧdd : {Γ : Context}
-    → Γ ⊢ ȧdd ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
-⊢ȧdd = ⊢μ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
+    → Γ ⊢ ȧdd ⦂ ℕ̇ →̇ ℕ̇ →̇ ℕ̇
+⊢ȧdd = ⊢μ̇ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
     (⊢lookup (thereʳ here))
     (⊢lookup here)
     (⊢ṡuc
@@ -534,7 +534,7 @@ _ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (there�
 ⊢2+2 = ⊢· (⊢· ⊢ȧdd ⊢ṫwo) ⊢ṫwo
 
 Church : Type → Type
-Church A = (A ⇒ A) ⇒ (A ⇒ A)
+Church A = (A →̇ A) →̇ (A →̇ A)
 
 ⊢ȯneᶜ : {Γ : Context} → {A : Type}
     → Γ ⊢ ȯneᶜ ⦂ Church A
@@ -549,7 +549,7 @@ Church A = (A ⇒ A) ⇒ (A ⇒ A)
 ⊢ṫhreeᶜ = ⊢λ̇ (⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here)))))
 
 ⊢ȧddᶜ : {Γ : Context} → {A : Type}
-    → Γ ⊢ ȧddᶜ ⦂ Church A ⇒ Church A ⇒ Church A
+    → Γ ⊢ ȧddᶜ ⦂ Church A →̇ Church A →̇ Church A
 ⊢ȧddᶜ = ⊢λ̇ (⊢λ̇ (⊢λ̇ (⊢λ̇
     (⊢·
         (⊢·
@@ -562,7 +562,7 @@ Church A = (A ⇒ A) ⇒ (A ⇒ A)
             (⊢lookup here))))))
 
 ⊢λ̇ṡuc : {Γ : Context}
-    → Γ ⊢ λ̇ṡuc ⦂ ℕ̇ ⇒ ℕ̇
+    → Γ ⊢ λ̇ṡuc ⦂ ℕ̇ →̇ ℕ̇
 ⊢λ̇ṡuc = ⊢λ̇ (⊢ṡuc (⊢lookup here))
 
 ⊢2+2ᶜ : ∅ ⊢ ȧddᶜ · ṫwoᶜ · ṫwoᶜ · λ̇ṡuc · żero ⦂ ℕ̇
@@ -584,11 +584,11 @@ nope₁ (⊢· () _)
 
 nope₂ : {A : Type} → ¬ (∅ ⊢ λ̇ "x" ⇒ "x"̇ · "x"̇ ⦂ A)
 nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-injective lookup1 lookup2 refl
-... | () -- (A ⇒ B) ≢ A
+... | () -- (A →̇ B) ≢ A
 
 ⊢ṁul : {Γ : Context}
-    → Γ ⊢ ṁul ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
-⊢ṁul = ⊢μ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
+    → Γ ⊢ ṁul ⦂ ℕ̇ →̇ ℕ̇ →̇ ℕ̇
+⊢ṁul = ⊢μ̇ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
     (⊢lookup (thereʳ here))
     ⊢żero
     (⊢·
@@ -602,7 +602,7 @@ nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-in
             (⊢lookup (thereʳ here)))))))
 
 ⊢ṁulᶜ : {Γ : Context} → {A : Type}
-    → Γ ⊢ ṁulᶜ ⦂ Church A ⇒ Church A ⇒ Church A
+    → Γ ⊢ ṁulᶜ ⦂ Church A →̇ Church A →̇ Church A
 ⊢ṁulᶜ = ⊢λ̇ (⊢λ̇ (⊢λ̇ (⊢·
     (⊢lookup (thereʳ (thereʳ here)))
     (⊢·
@@ -616,8 +616,8 @@ nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-in
 ⊢2*2ᶜ = ⊢· (⊢· (⊢· (⊢· ⊢ṁulᶜ ⊢ṫwoᶜ) ⊢ṫwoᶜ) ⊢λ̇ṡuc) ⊢żero
 
 ⊢ėxp : {Γ : Context}
-    → Γ ⊢ ėxp ⦂ ℕ̇ ⇒ ℕ̇ ⇒ ℕ̇
-⊢ėxp = ⊢μ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
+    → Γ ⊢ ėxp ⦂ ℕ̇ →̇ ℕ̇ →̇ ℕ̇
+⊢ėxp = ⊢μ̇ (⊢λ̇ (⊢λ̇ (⊢caseℕ̇
     (⊢lookup here)
     ⊢ȯne
     (⊢·
@@ -631,11 +631,11 @@ nope₂ (⊢λ̇ (⊢· (⊢lookup lookup1) (⊢lookup lookup2))) with lookup-in
             (⊢lookup here))))))
 
 _ : {A : Type}
-    → Church (A ⇒ A) ≡ Church A ⇒ Church A
+    → Church (A →̇ A) ≡ Church A →̇ Church A
 _ = refl
 
 ⊢ėxpᶜ : {Γ : Context} → {A : Type}
-    → Γ ⊢ ėxpᶜ ⦂ Church A ⇒ Church (A ⇒ A) ⇒ Church A
+    → Γ ⊢ ėxpᶜ ⦂ Church A →̇ Church (A →̇ A) →̇ Church A
 ⊢ėxpᶜ = ⊢λ̇ (⊢λ̇ (⊢·
     (⊢lookup here)
     (⊢lookup (thereʳ here))))
