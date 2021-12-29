@@ -4,7 +4,7 @@ module plfa.part2.More where
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _<_; _<?_; z≤n; s≤s)
-open import Data.List using (List; []; _∷_)
+open import Data.List using (List; []; _∷_; _++_)
 open import Function using (_∘_; flip)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness)
@@ -30,6 +30,10 @@ Context = List Type
 infixl 5 _‚_ -- '‚': U+201A
 pattern _‚_ Γ A = A ∷ Γ
 
+infixl 4.5 _‚‚_
+_‚‚_ : Context → Context → Context
+_‚‚_ = flip _++_
+
 infix 4 _∋_
 data _∋_ : Context → Type → Set where
     here : {Γ : Context} → {A : Type}
@@ -52,7 +56,7 @@ infixr 5 _∷̇_
 
 data _⊢_ : Context → Type → Set where
     -- variables
-    ⊢lookup : {Γ : Context} → {A : Type}
+    lookup : {Γ : Context} → {A : Type}
         → Γ ∋ A
         → Γ ⊢ A
     -- function type
@@ -171,60 +175,63 @@ infix 9 #_
     → (n : ℕ)
     → {z : True (n <? length Γ)}
     → Γ ⊢ find (toWitness z)
-#_ n {z} = ⊢lookup (count (toWitness z))
+#_ n {z} = lookup (count (toWitness z))
 
-extend : {Γ Δ : Context}
+extend-reindex : {Γ Δ : Context}
     → ({A : Type} → Γ ∋ A → Δ ∋ A)
     → ({A B : Type} → Γ ‚ B ∋ A → Δ ‚ B ∋ A)
-extend ρ here = here
-extend ρ (there index) = there (ρ index)
+extend-reindex ρ here = here
+extend-reindex ρ (there index) = there (ρ index)
 
-reindex : {Γ Δ : Context}
+reindex-to-rebase : {Γ Δ : Context}
     → ({A : Type} → Γ ∋ A → Δ ∋ A)
     → ({A : Type} → Γ ⊢ A → Δ ⊢ A)
-reindex ρ (⊢lookup index) = ⊢lookup (ρ index)
-reindex ρ (λ̇ term) = λ̇ (reindex (extend ρ) term)
-reindex ρ (term₁ · term₂) = (reindex ρ term₁) · (reindex ρ term₂)
-reindex ρ żero = żero
-reindex ρ (ṡuc term) = ṡuc (reindex ρ term)
-reindex ρ (caseℕ̇ term₁ term₂ term₃) = caseℕ̇ (reindex ρ term₁) (reindex ρ term₂) (reindex (extend ρ) term₃)
-reindex ρ (μ̇ term) = μ̇ (reindex (extend ρ) term)
-reindex ρ (l̇et term₁ term₂) = l̇et (reindex ρ term₁) (reindex (extend ρ) term₂)
-reindex ρ (prim n) = prim n
-reindex ρ (ŝuc term) = ŝuc (reindex ρ term)
-reindex ρ (term₁ +̂ term₂) = reindex ρ term₁ +̂ reindex ρ term₂
-reindex ρ (term₁ *̂ term₂) = reindex ρ term₁ *̂ reindex ρ term₂
-reindex ρ (case𝟘̇ term) = case𝟘̇ (reindex ρ term)
-reindex ρ ṫt = ṫt
-reindex ρ (case𝟙̇ term₁ term₂) = case𝟙̇ (reindex ρ term₁) (reindex ρ term₂)
-reindex ρ (i̇nj₁ term) = i̇nj₁ (reindex ρ term)
-reindex ρ (i̇nj₂ term) = i̇nj₂ (reindex ρ term)
-reindex ρ (case+̇ term₁ term₂ term₃) = case+̇ (reindex ρ term₁) (reindex (extend ρ) term₂) (reindex (extend ρ) term₃)
-reindex ρ (term₁ ,̇ term₂) = (reindex ρ term₁) ,̇ (reindex ρ term₂)
-reindex ρ (ṗroj₁ term) = ṗroj₁ (reindex ρ term)
-reindex ρ (ṗroj₂ term) = ṗroj₂ (reindex ρ term)
-reindex ρ (case×̇ term₁ term₂) = case×̇ (reindex ρ term₁) (reindex (extend (extend ρ)) term₂)
-reindex ρ [̇] = [̇]
-reindex ρ (term₁ ∷̇ term₂) = reindex ρ term₁ ∷̇ reindex ρ term₂
-reindex ρ (caseL̇ist term₁ term₂ term₃) = caseL̇ist (reindex ρ term₁) (reindex ρ term₂) (reindex (extend (extend ρ)) term₃)
+reindex-to-rebase ρ (lookup index) = lookup (ρ index)
+reindex-to-rebase ρ (λ̇ term) = λ̇ (reindex-to-rebase (extend-reindex ρ) term)
+reindex-to-rebase ρ (term₁ · term₂) = (reindex-to-rebase ρ term₁) · (reindex-to-rebase ρ term₂)
+reindex-to-rebase ρ żero = żero
+reindex-to-rebase ρ (ṡuc term) = ṡuc (reindex-to-rebase ρ term)
+reindex-to-rebase ρ (caseℕ̇ term₁ term₂ term₃) = caseℕ̇ (reindex-to-rebase ρ term₁) (reindex-to-rebase ρ term₂) (reindex-to-rebase (extend-reindex ρ) term₃)
+reindex-to-rebase ρ (μ̇ term) = μ̇ (reindex-to-rebase (extend-reindex ρ) term)
+reindex-to-rebase ρ (l̇et term₁ term₂) = l̇et (reindex-to-rebase ρ term₁) (reindex-to-rebase (extend-reindex ρ) term₂)
+reindex-to-rebase ρ (prim n) = prim n
+reindex-to-rebase ρ (ŝuc term) = ŝuc (reindex-to-rebase ρ term)
+reindex-to-rebase ρ (term₁ +̂ term₂) = reindex-to-rebase ρ term₁ +̂ reindex-to-rebase ρ term₂
+reindex-to-rebase ρ (term₁ *̂ term₂) = reindex-to-rebase ρ term₁ *̂ reindex-to-rebase ρ term₂
+reindex-to-rebase ρ (case𝟘̇ term) = case𝟘̇ (reindex-to-rebase ρ term)
+reindex-to-rebase ρ ṫt = ṫt
+reindex-to-rebase ρ (case𝟙̇ term₁ term₂) = case𝟙̇ (reindex-to-rebase ρ term₁) (reindex-to-rebase ρ term₂)
+reindex-to-rebase ρ (i̇nj₁ term) = i̇nj₁ (reindex-to-rebase ρ term)
+reindex-to-rebase ρ (i̇nj₂ term) = i̇nj₂ (reindex-to-rebase ρ term)
+reindex-to-rebase ρ (case+̇ term₁ term₂ term₃) = case+̇ (reindex-to-rebase ρ term₁) (reindex-to-rebase (extend-reindex ρ) term₂) (reindex-to-rebase (extend-reindex ρ) term₃)
+reindex-to-rebase ρ (term₁ ,̇ term₂) = (reindex-to-rebase ρ term₁) ,̇ (reindex-to-rebase ρ term₂)
+reindex-to-rebase ρ (ṗroj₁ term) = ṗroj₁ (reindex-to-rebase ρ term)
+reindex-to-rebase ρ (ṗroj₂ term) = ṗroj₂ (reindex-to-rebase ρ term)
+reindex-to-rebase ρ (case×̇ term₁ term₂) = case×̇ (reindex-to-rebase ρ term₁) (reindex-to-rebase (extend-reindex (extend-reindex ρ)) term₂)
+reindex-to-rebase ρ [̇] = [̇]
+reindex-to-rebase ρ (term₁ ∷̇ term₂) = reindex-to-rebase ρ term₁ ∷̇ reindex-to-rebase ρ term₂
+reindex-to-rebase ρ (caseL̇ist term₁ term₂ term₃) = caseL̇ist (reindex-to-rebase ρ term₁) (reindex-to-rebase ρ term₂) (reindex-to-rebase (extend-reindex (extend-reindex ρ)) term₃)
 
-⊢extend : {Γ Δ : Context}
+shift : {Γ : Context} → {A B : Type} → Γ ⊢ A → Γ ‚ B ⊢ A
+shift = reindex-to-rebase there
+
+extend : {Γ Δ : Context}
     → ({A : Type} → Γ ∋ A → Δ ⊢ A)
     → ({A B : Type} → Γ ‚ B ∋ A → Δ ‚ B ⊢ A)
-⊢extend σ here = ⊢lookup here
-⊢extend σ (there index) = reindex there (σ index)
+extend σ here = lookup here
+extend σ (there index) = shift (σ index)
 
 substitute : {Γ Δ : Context}
     → ({A : Type} → Γ ∋ A → Δ ⊢ A)
     → ({A : Type} → Γ ⊢ A → Δ ⊢ A)
-substitute σ (⊢lookup index) = σ index
-substitute σ (λ̇ term) = λ̇ substitute (⊢extend σ) term
+substitute σ (lookup index) = σ index
+substitute σ (λ̇ term) = λ̇ substitute (extend σ) term
 substitute σ (term₁ · term₂) = (substitute σ term₁) · (substitute σ term₂)
 substitute σ żero = żero
 substitute σ (ṡuc term) = ṡuc substitute σ term
-substitute σ (caseℕ̇ term₁ term₂ term₃) = caseℕ̇ (substitute σ term₁) (substitute σ term₂) (substitute (⊢extend σ) term₃)
-substitute σ (μ̇ term) = μ̇ substitute (⊢extend σ) term
-substitute σ (l̇et term₁ term₂) = l̇et (substitute σ term₁) (substitute (⊢extend σ) term₂)
+substitute σ (caseℕ̇ term₁ term₂ term₃) = caseℕ̇ (substitute σ term₁) (substitute σ term₂) (substitute (extend σ) term₃)
+substitute σ (μ̇ term) = μ̇ substitute (extend σ) term
+substitute σ (l̇et term₁ term₂) = l̇et (substitute σ term₁) (substitute (extend σ) term₂)
 substitute σ (prim n) = prim n
 substitute σ (ŝuc term) = ŝuc (substitute σ term)
 substitute σ (term₁ +̂ term₂) = substitute σ term₁ +̂ substitute σ term₂
@@ -234,40 +241,58 @@ substitute σ ṫt = ṫt
 substitute σ (case𝟙̇ term₁ term₂) = case𝟙̇ (substitute σ term₁) (substitute σ term₂)
 substitute σ (i̇nj₁ term) = i̇nj₁ (substitute σ term)
 substitute σ (i̇nj₂ term) = i̇nj₂ (substitute σ term)
-substitute σ (case+̇ term₁ term₂ term₃) = case+̇ (substitute σ term₁) (substitute (⊢extend σ) term₂) (substitute (⊢extend σ) term₃)
+substitute σ (case+̇ term₁ term₂ term₃) = case+̇ (substitute σ term₁) (substitute (extend σ) term₂) (substitute (extend σ) term₃)
 substitute σ (term₁ ,̇ term₂) = (substitute σ term₁) ,̇ (substitute σ term₂)
 substitute σ (ṗroj₁ term) = ṗroj₁ (substitute σ term)
 substitute σ (ṗroj₂ term) = ṗroj₂ (substitute σ term)
-substitute σ (case×̇ term₁ term₂) = case×̇ (substitute σ term₁) (substitute (⊢extend (⊢extend σ)) term₂)
+substitute σ (case×̇ term₁ term₂) = case×̇ (substitute σ term₁) (substitute (extend (extend σ)) term₂)
 substitute σ [̇] = [̇]
 substitute σ (term₁ ∷̇ term₂) = substitute σ term₁ ∷̇ substitute σ term₂
-substitute σ (caseL̇ist term₁ term₂ term₃) = caseL̇ist (substitute σ term₁) (substitute σ term₂) (substitute (⊢extend (⊢extend σ)) term₃)
+substitute σ (caseL̇ist term₁ term₂ term₃) = caseL̇ist (substitute σ term₁) (substitute σ term₂) (substitute (extend (extend σ)) term₃)
+
+σ₁ : {Γ : Context} → {A B : Type}
+    → Γ ⊢ A
+    → Γ ‚ A ∋ B
+    → Γ ⊢ B
+σ₁ term here = term
+σ₁ term (there index) = lookup index
 
 _[_] : {Γ : Context} → {A B : Type}
     → Γ ‚ A ⊢ B
     → Γ ⊢ A
     → Γ ⊢ B
-_[_] {Γ} {A} {B} term₁ term₂ = substitute {Γ ‚ A} {Γ} σ term₁ where
-    σ : {B : Type} → Γ ‚ A ∋ B → Γ ⊢ B
-    σ here = term₂
-    σ (there index) = ⊢lookup index
+_[_] {Γ} {A} {B} term₁ term₂ = substitute {Γ ‚ A} {Γ} (σ₁ term₂) {B} term₁
+-- _[_] {Γ} {A} {B} term₁ term₂ = substitute {Γ ‚ A} {Γ} σ term₁ where
+--     σ : {B : Type} → Γ ‚ A ∋ B → Γ ⊢ B
+--     σ here = term₂
+--     σ (there index) = lookup index
+
+σ₂ : {Γ : Context} → {A B C : Type}
+    → Γ ⊢ A
+    → Γ ⊢ B
+    → Γ ‚ A ‚ B ∋ C
+    → Γ ⊢ C
+σ₂ term₁ term₂ here = term₂
+σ₂ term₁ term₂ (there here) = term₁
+σ₂ term₁ term₂ (there (there index)) = lookup index
 
 _[_][_] : {Γ : Context} → {A B C : Type}
     → Γ ‚ A ‚ B ⊢ C
     → Γ ⊢ A
     → Γ ⊢ B
     → Γ ⊢ C
-_[_][_] {Γ} {A} {B} {C} term₁ term₂ term₃ = substitute {Γ ‚ A ‚ B} {Γ} σ term₁ where
-    σ : {C : Type} → Γ ‚ A ‚ B ∋ C → Γ ⊢ C
-    σ here = term₃
-    σ (there here) = term₂
-    σ (there (there index)) = ⊢lookup index
+_[_][_] {Γ} {A} {B} {C} term₁ term₂ term₃ = substitute {Γ ‚ A ‚ B} {Γ} (σ₂ term₂ term₃) {C} term₁
+-- _[_][_] {Γ} {A} {B} {C} term₁ term₂ term₃ = substitute {Γ ‚ A ‚ B} {Γ} σ term₁ where
+--     σ : {C : Type} → Γ ‚ A ‚ B ∋ C → Γ ⊢ C
+--     σ here = term₃
+--     σ (there here) = term₂
+--     σ (there (there index)) = lookup index
 
 -- double-substitute : {Γ : Context} → {A B C : Type}
 --     → (term₁ : Γ ‚ A ‚ B ⊢ C)
 --     → (term₂ : Γ ⊢ A)
 --     → (term₃ : Γ ⊢ B)
---     → term₁ [ term₂ ][ term₃ ] ≡ term₁ [ reindex there term₃ ] [ term₂ ]
+--     → term₁ [ term₂ ][ term₃ ] ≡ term₁ [ shift term₃ ] [ term₂ ]
 -- double-substitute {Γ} {A} {B} {C} term₁ term₂ term₃ = ?
 
 data Value : {Γ : Context} → {A : Type} → Γ ⊢ A → Set where
@@ -777,31 +802,31 @@ ėxpᶜ = λ̇ λ̇ # 0 · # 1
 
 _ : eval (gas 14) (ėxpᶜ · ṫwoᶜ · ṫwoᶜ · λ̇ṡuc · żero) ≡ steps
     (-- begin
-            (λ̇ (λ̇ ⊢lookup here · ⊢lookup (there here))) · (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · (λ̇ ṡuc ⊢lookup here) · żero
+            (λ̇ (λ̇ lookup here · lookup (there here))) · (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · (λ̇ ṡuc lookup here) · żero
         ⟶⟨ ξ-·₁ (ξ-·₁ (ξ-·₁ (β-λ̇ value-λ̇))) ⟩
-            (λ̇ ⊢lookup here · (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here)))) · (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · (λ̇ ṡuc ⊢lookup here) · żero
+            (λ̇ lookup here · (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here)))) · (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · (λ̇ ṡuc lookup here) · żero
         ⟶⟨ ξ-·₁ (ξ-·₁ (β-λ̇ value-λ̇)) ⟩
-            (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · (λ̇ ṡuc ⊢lookup here) · żero
+            (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · (λ̇ ṡuc lookup here) · żero
         ⟶⟨ ξ-·₁ (ξ-·₁ (β-λ̇ value-λ̇)) ⟩
-            (λ̇ (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · ((λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · ⊢lookup here)) · (λ̇ ṡuc ⊢lookup here) · żero
+            (λ̇ (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · ((λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · lookup here)) · (λ̇ ṡuc lookup here) · żero
         ⟶⟨ ξ-·₁ (β-λ̇ value-λ̇) ⟩
-            (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · ((λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · (λ̇ ṡuc ⊢lookup here)) · żero
+            (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · ((λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · (λ̇ ṡuc lookup here)) · żero
         ⟶⟨ ξ-·₁ (ξ-·₂ value-λ̇ (β-λ̇ value-λ̇)) ⟩
-            (λ̇ (λ̇ ⊢lookup (there here) · (⊢lookup (there here) · ⊢lookup here))) · (λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · żero
+            (λ̇ (λ̇ lookup (there here) · (lookup (there here) · lookup here))) · (λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · żero
         ⟶⟨ ξ-·₁ (β-λ̇ value-λ̇) ⟩
-            (λ̇ (λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · ((λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · ⊢lookup here)) · żero
+            (λ̇ (λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · ((λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · lookup here)) · żero
         ⟶⟨ β-λ̇ value-żero ⟩
-            (λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · ((λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · żero)
+            (λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · ((λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · żero)
         ⟶⟨ ξ-·₂ value-λ̇ (β-λ̇ value-żero) ⟩
-            (λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · ((λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · żero))
+            (λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · ((λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · żero))
         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ (β-λ̇ value-żero)) ⟩
-            (λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · ((λ̇ ṡuc ⊢lookup here) · ṡuc żero)
+            (λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · ((λ̇ ṡuc lookup here) · ṡuc żero)
         ⟶⟨ ξ-·₂ value-λ̇ (β-λ̇ (value-ṡuc value-żero)) ⟩
-            (λ̇ (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ⊢lookup here)) · ṡuc (ṡuc żero)
+            (λ̇ (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · lookup here)) · ṡuc (ṡuc żero)
         ⟶⟨ β-λ̇ (value-ṡuc (value-ṡuc value-żero)) ⟩
-            (λ̇ ṡuc ⊢lookup here) · ((λ̇ ṡuc ⊢lookup here) · ṡuc (ṡuc żero))
+            (λ̇ ṡuc lookup here) · ((λ̇ ṡuc lookup here) · ṡuc (ṡuc żero))
         ⟶⟨ ξ-·₂ value-λ̇ (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
-            (λ̇ ṡuc ⊢lookup here) · ṡuc (ṡuc (ṡuc żero))
+            (λ̇ ṡuc lookup here) · ṡuc (ṡuc (ṡuc żero))
         ⟶⟨ β-λ̇ (value-ṡuc (value-ṡuc (value-ṡuc value-żero))) ⟩
             ṡuc (ṡuc (ṡuc (ṡuc żero)))
         ∎)

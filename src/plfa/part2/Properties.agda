@@ -144,24 +144,24 @@ value? typing with progress typing
 
 -- Perservation
 
--- Step 1: Renaming
+-- Step 1: Renaming (Reindexing to Rebasing)
 
-extend : {Γ Δ : Context}
-    → ({x : Id} → {A : Type} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A) -- ρ maps each variable (index) of type A in context Γ to a variable of type A in context Δ
-    → ({x y : Id} → {A B : Type} → Γ , y ⦂ B ∋ x ⦂ A → Δ , y ⦂ B ∋ x ⦂ A) -- ρ lifts to a map (by shifting 1) from variables of type A in context Γ extended by B to variables of type A in context Δ extended by B
-extend ρ here = here
-extend ρ (there f lookup) = there f (ρ lookup)
+extend-reindex : {Γ Δ : Context}
+    → ({x : Id} → {A : Type} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A) -- ρ (reindex) maps each variable (index) of type A in context Γ to a variable of type A in context Δ, i.e., Γ is a subset of Δ (Γ ⊆ Δ)
+    → ({x y : Id} → {A B : Type} → Γ , y ⦂ B ∋ x ⦂ A → Δ , y ⦂ B ∋ x ⦂ A) -- ρ lifts to a map (reindex) (by shifting 1) from variables of type A in context Γ extended by B to variables of type A in context Δ extended by B
+extend-reindex ρ here = here
+extend-reindex ρ (there f lookup) = there f (ρ lookup)
 
-reindex : {Γ Δ : Context}
-    → ({x : Id} → {A : Type} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A) -- ρ maps each variable (index) of type A in context Γ to a variable of type A in context Δ
-    → ({t : Term} → {A : Type} → Γ ⊢ t ⦂ A → Δ ⊢ t ⦂ A) -- ρ lifts to a map from terms of type A in context Γ to terms of type A in context Γ
-reindex ρ (⊢lookup lookup) = ⊢lookup (ρ lookup)
-reindex ρ (⊢λ̇ typing) = ⊢λ̇ (reindex (extend ρ) typing)
-reindex ρ (⊢· typing₁ typing₂) = ⊢· (reindex ρ typing₁) (reindex ρ typing₂)
-reindex ρ ⊢żero = ⊢żero
-reindex ρ (⊢ṡuc typing) = ⊢ṡuc (reindex ρ typing)
-reindex ρ (⊢caseℕ̇ typing₁ typing₂ typing₃) = ⊢caseℕ̇ (reindex ρ typing₁) (reindex ρ typing₂) (reindex (extend ρ) typing₃)
-reindex ρ (⊢μ̇ typing) = ⊢μ̇ (reindex (extend ρ) typing)
+reindex-to-rebase : {Γ Δ : Context}
+    → ({x : Id} → {A : Type} → Γ ∋ x ⦂ A → Δ ∋ x ⦂ A) -- ρ (reindex) maps each variable (index) of type A in context Γ to a variable of type A in context Δ
+    → ({t : Term} → {A : Type} → Γ ⊢ t ⦂ A → Δ ⊢ t ⦂ A) -- ρ lifts to a map (rebase) from terms of type A in context Γ to terms of type A in context Γ
+reindex-to-rebase ρ (⊢lookup lookup) = ⊢lookup (ρ lookup)
+reindex-to-rebase ρ (⊢λ̇ typing) = ⊢λ̇ (reindex-to-rebase (extend-reindex ρ) typing)
+reindex-to-rebase ρ (⊢· typing₁ typing₂) = ⊢· (reindex-to-rebase ρ typing₁) (reindex-to-rebase ρ typing₂)
+reindex-to-rebase ρ ⊢żero = ⊢żero
+reindex-to-rebase ρ (⊢ṡuc typing) = ⊢ṡuc (reindex-to-rebase ρ typing)
+reindex-to-rebase ρ (⊢caseℕ̇ typing₁ typing₂ typing₃) = ⊢caseℕ̇ (reindex-to-rebase ρ typing₁) (reindex-to-rebase ρ typing₂) (reindex-to-rebase (extend-reindex ρ) typing₃)
+reindex-to-rebase ρ (⊢μ̇ typing) = ⊢μ̇ (reindex-to-rebase (extend-reindex ρ) typing)
 
 typing₁ : ∅ , "f" ⦂ ℕ̇ →̇ ℕ̇ ⊢ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇ →̇ ℕ̇
 typing₁ = ⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ here)) (⊢lookup here)))
@@ -169,18 +169,18 @@ typing₁ = ⊢λ̇ (⊢· (⊢lookup (thereʳ here)) (⊢· (⊢lookup (thereʳ
 typing₂ : ∅ , "f" ⦂ ℕ̇ →̇ ℕ̇ , "y" ⦂ ℕ̇ ⊢ λ̇ "x" ⇒ "f"̇ · ("f"̇ · "x"̇) ⦂ ℕ̇ →̇ ℕ̇
 typing₂ = ⊢λ̇ (⊢· (⊢lookup (thereʳ (thereʳ here))) (⊢· (⊢lookup (thereʳ (thereʳ here))) (⊢lookup here)))
 
-_ : reindex (λ { here → thereʳ here }) typing₁ ≡ typing₂
+_ : reindex-to-rebase (λ { here → thereʳ here }) typing₁ ≡ typing₂
 _ = refl
 
 weaken : {Γ : Context} → {t : Term} → {A : Type}
     → ∅ ⊢ t ⦂ A
     → Γ ⊢ t ⦂ A
-weaken typing = reindex (λ ()) typing
+weaken typing = reindex-to-rebase (λ ()) typing
 
 drop : {Γ : Context} → {x : Id} → {t : Term} → {A B C : Type}
     → Γ , x ⦂ A , x ⦂ B ⊢ t ⦂ C
     → Γ , x ⦂ B ⊢ t ⦂ C
-drop {Γ} {x} {t} {A} {B} {C} typing = reindex ρ typing where
+drop {Γ} {x} {t} {A} {B} {C} typing = reindex-to-rebase ρ typing where
     ρ : {z : Id} → {D : Type}
         → Γ , x ⦂ A , x ⦂ B ∋ z ⦂ D
         → Γ , x ⦂ B ∋ z ⦂ D
@@ -192,7 +192,7 @@ swap : {Γ : Context} → {x y : Id} → {t : Term} → {A B C : Type}
     → y ≢ x
     → Γ , x ⦂ A , y ⦂ B ⊢ t ⦂ C
     → Γ , y ⦂ B , x ⦂ A ⊢ t ⦂ C
-swap {Γ} {x} {y} {t} {A} {B} {C} f typing = reindex ρ typing where
+swap {Γ} {x} {y} {t} {A} {B} {C} f typing = reindex-to-rebase ρ typing where
     ρ : {z : Id} → {D : Type}
         → Γ , x ⦂ A , y ⦂ B ∋ z ⦂ D
         → Γ , y ⦂ B , x ⦂ A ∋ z ⦂ D
