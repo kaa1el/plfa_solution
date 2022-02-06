@@ -4,21 +4,16 @@ module plfa.part2.DeBruijn where
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
-open import Data.Bool using (T; not)
-open import Data.Maybe using (Maybe; nothing; just)
 open import Data.Nat using (ℕ; zero; suc; _<_; _<?_; z≤n; s≤s)
 open import Data.List using (List; []; _∷_; _++_)
-open import Data.List.Relation.Unary.All using (All; []; _∷_)
 open import Data.List.Relation.Unary.Any using (Any; here; there)
 open import Data.List.Membership.Propositional using (_∈_)
-open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
+open import Data.Product using (Σ; _×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Function using (_∘_; flip)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; cong₂; subst)
-
-open import plfa.part1.Isomorphism using (_≅_; _≲_)
 
 infixr 7 _→̇_
 
@@ -413,7 +408,7 @@ _ = refl
 --     → (term₂ : Γ ⊢ A)
 --     → (term₃ : Γ ⊢ B)
 --     → term₁ [ term₂ ][ term₃ ] ≡ term₁ [ shift term₃ ] [ term₂ ]
--- double-substitute {Γ} {A} {B} {C} term₁ term₂ term₃ = ?
+-- double-substitute {Γ} {A} {B} {C} term₁ term₂ term₃ = ? -- see DoubleSubstitutionDeBruijn.agda
 
 -- Values (Canonical forms i.e., extrinsic value and typed)
 
@@ -731,84 +726,84 @@ _ : eval (gas 13) (ȧddᶜ · ṫwoᶜ · ṫwoᶜ · λ̇ṡuc · żero) ≡ 
     (done (value-ṡuc (value-ṡuc (value-ṡuc (value-ṡuc value-żero)))))
 _ = refl
 
--- _ : eval (gas 37) (ṁul · ṫwo · ṫwo) ≡ steps
---     (-- begin
---             (μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ṡuc (ṡuc żero)
---         ⟶⟨ ξ-·₁ (ξ-·₁ β-μ̇) ⟩
---             (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc (ṡuc żero) · ṡuc (ṡuc żero)
---         ⟶⟨ ξ-·₁ (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)
---         ⟶⟨ β-λ̇ (value-ṡuc (value-ṡuc value-żero)) ⟩
---             caseℕ̇ (ṡuc (ṡuc żero)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
---         ⟶⟨ β-ṡuc (value-ṡuc value-żero) ⟩
---             (μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-·₁ (ξ-·₁ β-μ̇) ⟩
---             (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-·₁ (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (ξ-·₁ β-μ̇)) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc żero · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (β-λ̇ (value-ṡuc value-żero))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc żero) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · caseℕ̇ (ṡuc żero) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-·₂ value-λ̇ (β-ṡuc value-żero) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (ξ-·₁ β-μ̇)) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (β-λ̇ (value-ṡuc (value-ṡuc value-żero)))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ (ξ-·₁ (ξ-·₁ β-μ̇))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · żero · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ (ξ-·₁ (β-λ̇ value-żero))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ żero żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ (β-λ̇ (value-ṡuc (value-ṡuc value-żero)))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · caseℕ̇ żero żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero))))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ β-żero) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · żero)
---         ⟶⟨ ξ-·₂ value-λ̇ (β-λ̇ value-żero) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · caseℕ̇ (ṡuc (ṡuc żero)) żero (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (β-ṡuc (value-ṡuc value-żero)) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · żero)
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc żero · żero)
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-·₁ (β-λ̇ (value-ṡuc value-żero)))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc ((λ̇ caseℕ̇ (ṡuc żero) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · żero)
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (β-λ̇ value-żero)) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc caseℕ̇ (ṡuc żero) żero (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (β-ṡuc value-żero)) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇)))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · żero · żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc (ξ-·₁ (β-λ̇ value-żero)))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc ((λ̇ caseℕ̇ żero (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · żero))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc (β-λ̇ value-żero))) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc caseℕ̇ żero żero (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · żero)))
---         ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc β-żero)) ⟩
---             (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)
---         ⟶⟨ β-λ̇ (value-ṡuc (value-ṡuc value-żero)) ⟩
---             caseℕ̇ (ṡuc (ṡuc żero)) (ṡuc (ṡuc żero)) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
---         ⟶⟨ β-ṡuc (value-ṡuc value-żero) ⟩
---             ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇)) ⟩
---             ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc żero · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-ṡuc (ξ-·₁ (β-λ̇ (value-ṡuc value-żero))) ⟩
---             ṡuc ((λ̇ caseℕ̇ (ṡuc żero) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero))
---         ⟶⟨ ξ-ṡuc (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
---             ṡuc caseℕ̇ (ṡuc żero) (ṡuc (ṡuc żero)) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-ṡuc (β-ṡuc value-żero) ⟩
---             ṡuc (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇))) ⟩
---             ṡuc (ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · żero · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (β-λ̇ value-żero))) ⟩
---             ṡuc (ṡuc ((λ̇ caseℕ̇ żero (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)))
---         ⟶⟨ ξ-ṡuc (ξ-ṡuc (β-λ̇ (value-ṡuc (value-ṡuc value-żero)))) ⟩
---             ṡuc (ṡuc caseℕ̇ żero (ṡuc (ṡuc żero)) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero))))
---         ⟶⟨ ξ-ṡuc (ξ-ṡuc β-żero) ⟩
---             ṡuc (ṡuc (ṡuc (ṡuc żero)))
---         ∎)
---     (done (value-ṡuc (value-ṡuc (value-ṡuc (value-ṡuc value-żero)))))
--- _ = refl
+_ : eval (gas 37) (ṁul · ṫwo · ṫwo) ≡ steps
+    (-- begin
+            (μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ṡuc (ṡuc żero)
+        ⟶⟨ ξ-·₁ (ξ-·₁ β-μ̇) ⟩
+            (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc (ṡuc żero) · ṡuc (ṡuc żero)
+        ⟶⟨ ξ-·₁ (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)
+        ⟶⟨ β-λ̇ (value-ṡuc (value-ṡuc value-żero)) ⟩
+            caseℕ̇ (ṡuc (ṡuc żero)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
+        ⟶⟨ β-ṡuc (value-ṡuc value-żero) ⟩
+            (μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-·₁ (ξ-·₁ β-μ̇) ⟩
+            (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-·₁ (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (ξ-·₁ β-μ̇)) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc żero · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (β-λ̇ (value-ṡuc value-żero))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc żero) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · caseℕ̇ (ṡuc żero) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-·₂ value-λ̇ (β-ṡuc value-żero) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (ξ-·₁ β-μ̇)) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₁ (β-λ̇ (value-ṡuc (value-ṡuc value-żero)))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ (ξ-·₁ (ξ-·₁ β-μ̇))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · żero · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ (ξ-·₁ (β-λ̇ value-żero))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ żero żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ (β-λ̇ (value-ṡuc (value-ṡuc value-żero)))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · caseℕ̇ żero żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc (ṡuc żero) · ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) żero ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup (there here) · (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero))))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-·₂ value-λ̇ β-żero) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ((λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · żero)
+        ⟶⟨ ξ-·₂ value-λ̇ (β-λ̇ value-żero) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · caseℕ̇ (ṡuc (ṡuc żero)) żero (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (β-ṡuc (value-ṡuc value-żero)) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · żero)
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc żero · żero)
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-·₁ (β-λ̇ (value-ṡuc value-żero)))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc ((λ̇ caseℕ̇ (ṡuc żero) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · żero)
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (β-λ̇ value-żero)) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc caseℕ̇ (ṡuc żero) żero (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (β-ṡuc value-żero)) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇)))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · żero · żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc (ξ-·₁ (β-λ̇ value-żero)))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc ((λ̇ caseℕ̇ żero (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · żero))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc (β-λ̇ value-żero))) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc caseℕ̇ żero żero (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · żero)))
+        ⟶⟨ ξ-·₂ value-λ̇ (ξ-ṡuc (ξ-ṡuc β-żero)) ⟩
+            (λ̇ caseℕ̇ (ṡuc (ṡuc żero)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)
+        ⟶⟨ β-λ̇ (value-ṡuc (value-ṡuc value-żero)) ⟩
+            caseℕ̇ (ṡuc (ṡuc żero)) (ṡuc (ṡuc żero)) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
+        ⟶⟨ β-ṡuc (value-ṡuc value-żero) ⟩
+            ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · ṡuc żero · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇)) ⟩
+            ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · ṡuc żero · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-ṡuc (ξ-·₁ (β-λ̇ (value-ṡuc value-żero))) ⟩
+            ṡuc ((λ̇ caseℕ̇ (ṡuc żero) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero))
+        ⟶⟨ ξ-ṡuc (β-λ̇ (value-ṡuc (value-ṡuc value-żero))) ⟩
+            ṡuc caseℕ̇ (ṡuc żero) (ṡuc (ṡuc żero)) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-ṡuc (β-ṡuc value-żero) ⟩
+            ṡuc (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · żero · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (ξ-·₁ β-μ̇))) ⟩
+            ṡuc (ṡuc ((λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here))))) · żero · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-ṡuc (ξ-ṡuc (ξ-·₁ (β-λ̇ value-żero))) ⟩
+            ṡuc (ṡuc ((λ̇ caseℕ̇ żero (lookup here) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · lookup (there here)))) · ṡuc (ṡuc żero)))
+        ⟶⟨ ξ-ṡuc (ξ-ṡuc (β-λ̇ (value-ṡuc (value-ṡuc value-żero)))) ⟩
+            ṡuc (ṡuc caseℕ̇ żero (ṡuc (ṡuc żero)) (ṡuc ((μ̇ (λ̇ (λ̇ caseℕ̇ (lookup (there here)) (lookup here) (ṡuc (lookup (there (there (there here))) · lookup here · lookup (there here)))))) · lookup here · ṡuc (ṡuc żero))))
+        ⟶⟨ ξ-ṡuc (ξ-ṡuc β-żero) ⟩
+            ṡuc (ṡuc (ṡuc (ṡuc żero)))
+        ∎)
+    (done (value-ṡuc (value-ṡuc (value-ṡuc (value-ṡuc value-żero)))))
+_ = refl
 
 _ : eval (gas 13) (ṁulᶜ · ṫwoᶜ · ṫwoᶜ · λ̇ṡuc · żero) ≡ steps
     (-- begin
@@ -1050,3 +1045,270 @@ determinism (ξ-·₂ {term₁ = term₁} value₁ reduction₁) (ξ-·₂ value
 determinism (ξ-ṡuc reduction₁) (ξ-ṡuc reduction₂) = cong ṡuc_ (determinism reduction₁ reduction₂)
 determinism (ξ-caseℕ̇ reduction₁) (β-ṡuc value₂) = ⊥-elim (¬[value×reducible] (value-ṡuc value₂) reduction₁)
 determinism (ξ-caseℕ̇ {term₂ = term₂} {term₃ = term₃} reduction₁) (ξ-caseℕ̇ reduction₂) = cong (λ term₁ → caseℕ̇ term₁ term₂ term₃) (determinism reduction₁ reduction₂)
+
+-- Bonus: use encode-decode to prove Term-Is-hSet
+
+-- open Relation.Binary.PropositionalEquality.≡-Reasoning
+
+open import plfa.part1.Equality using (cong₃; subst-cong; subst₂; subst-cong₂; subst₂≡subst×subst; subst₂≡id×subst₂; subst₃; subst-cong₃; subst₃≡subst×subst×subst)
+open import plfa.part1.Isomorphism using (_≅_; _≲_; Is-hProp; Is-hSet; Is-hGroupoid; ×-Is-hProp; Σ-Is-hProp; ⊤-Is-hProp; ⊥-Is-hProp; Is-hSet-implies-Is-hGroupoid; hProp-iso; ≅-Is-hProp; ≅-Is-hSet)
+open import plfa.part1.Quantifiers using (Tree; leaf; node; Tree-Is-hSet)
+open import plfa.part1.Lists using (Membership-Is-hSet)
+
+Type≅Tree : Type ≅ Tree
+Type≅Tree = record {
+        to = to;
+        from = from;
+        from∘to = from∘to;
+        to∘from = to∘from
+    } where
+        to : Type → Tree
+        to ℕ̇ = leaf
+        to (A →̇ B) = node (to A) (to B)
+
+        from : Tree → Type
+        from leaf = ℕ̇
+        from (node tree₁ tree₂) = (from tree₁) →̇ (from tree₂)
+
+        from∘to : (A : Type) → from (to A) ≡ A
+        from∘to ℕ̇ = refl
+        from∘to (A →̇ B) = cong₂ _→̇_ (from∘to A) (from∘to B)
+
+        to∘from : (tree : Tree) → to (from tree) ≡ tree
+        to∘from leaf = refl
+        to∘from (node tree₁ tree₂) = cong₂ node (to∘from tree₁) (to∘from tree₂)
+
+Type-Is-hSet : Is-hSet Type
+Type-Is-hSet = ≅-Is-hSet Type≅Tree Tree-Is-hSet
+
+Index≅Membership : {Γ : Context} → {A : Type} → Γ ∋ A ≅ A ∈ Γ
+Index≅Membership = record {
+        to = to;
+        from = from;
+        from∘to = from∘to;
+        to∘from = to∘from
+    } where
+        to : {Γ : Context} → {A : Type} → Γ ∋ A → A ∈ Γ
+        to here = here refl
+        to (there index) = there (to index)
+
+        from : {Γ : Context} → {A : Type} → A ∈ Γ → Γ ∋ A
+        from (here refl) = here
+        from (there p) = there (from p)
+
+        from∘to : {Γ : Context} → {A : Type} → (index : Γ ∋ A) → from (to index) ≡ index
+        from∘to here = refl
+        from∘to (there index) = cong there (from∘to index)
+
+        to∘from : {Γ : Context} → {A : Type} → (p : A ∈ Γ) → to (from p) ≡ p
+        to∘from (here refl) = refl
+        to∘from (there p) = cong there (to∘from p)
+
+Index-Is-hSet : {Γ : Context} → {A : Type} → Is-hSet (Γ ∋ A)
+Index-Is-hSet = ≅-Is-hSet Index≅Membership (Membership-Is-hSet (Is-hSet-implies-Is-hGroupoid Type-Is-hSet))
+
+CodeTerm : {Γ : Context} → {A : Type} → (term₁ term₂ : Γ ⊢ A) → Set
+CodeTerm (lookup index₁) (lookup index₂) = index₁ ≡ index₂
+CodeTerm (lookup index₁) (λ̇ term₂) = ⊥
+CodeTerm (lookup index₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (lookup index₁) żero = ⊥
+CodeTerm (lookup index₁) (ṡuc term₂) = ⊥
+CodeTerm (lookup index₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (lookup index₁) (μ̇ term₂) = ⊥
+CodeTerm (λ̇ term₁) (lookup index₂) = ⊥
+CodeTerm (λ̇ term₁) (λ̇ term₂) = CodeTerm term₁ term₂
+CodeTerm (λ̇ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (λ̇ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (λ̇ term₁) (μ̇ term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (lookup index₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (λ̇ term₂) = ⊥
+CodeTerm (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) =
+    Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ } -- use with-abstraction so that we can use pattern-matching lambda definition anyway?!
+-- CodeTerm {Γ} (_·_ {A = A₁} {B = B₁} term₁₁ term₁₂) (_·_ {A = A₂} {B = .B₁} term₂₁ term₂₂) =
+    -- Σ (A₁ ≡ A₂) λ p → CodeTerm (subst (λ A₁ → Γ ⊢ A₁ →̇ B₁) p term₁₁) term₂₁ × CodeTerm (subst (Γ ⊢_) p term₁₂) term₂₂ -- use Σ type to force the domain of both term₁₁ and term₂₁ to be equal!
+-- CodeTerm (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) =
+--     Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ } -- this is wrong, it will cause encodeTerm-decodeTerm to stuck at Σ (A₁ ≡ A₁), must define on all paths p
+CodeTerm (term₁₁ · term₁₂) żero = ⊥
+CodeTerm (term₁₁ · term₁₂) (ṡuc term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ · term₁₂) (μ̇ term₂) = ⊥
+CodeTerm żero (lookup index₂) = ⊥
+CodeTerm żero (term₂₁ · term₂₂) = ⊥
+CodeTerm żero żero = ⊤
+CodeTerm żero (ṡuc term₂) = ⊥
+CodeTerm żero (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm żero (μ̇ term₂) = ⊥
+CodeTerm (ṡuc term₁) (lookup index₂) = ⊥
+CodeTerm (ṡuc term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (ṡuc term₁) żero = ⊥
+CodeTerm (ṡuc term₁) (ṡuc term₂) = CodeTerm term₁ term₂
+CodeTerm (ṡuc term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṡuc term₁) (μ̇ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (lookup index₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (λ̇ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (term₂₁ · term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) żero = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (ṡuc term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (μ̇ term₂) = ⊥
+CodeTerm (μ̇ term₁) (lookup index₂) = ⊥
+CodeTerm (μ̇ term₁) (λ̇ term₂) = ⊥
+CodeTerm (μ̇ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (μ̇ term₁) żero = ⊥
+CodeTerm (μ̇ term₁) (ṡuc term₂) = ⊥
+CodeTerm (μ̇ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (μ̇ term₁) (μ̇ term₂) = CodeTerm term₁ term₂
+
+-- CodeTerm : {Γ : Context} → {A : Type} → (term₁ term₂ : Γ ⊢ A) → Set
+-- CodeTerm (lookup index₁) (lookup index₂) = index₁ ≡ index₂
+-- CodeTerm (λ̇ term₁) (λ̇ term₂) = CodeTerm term₁ term₂
+-- CodeTerm (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) = Σ (A₁ ≡ A₂) (λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ })
+-- CodeTerm żero żero = ⊤
+-- CodeTerm (ṡuc term₁) (ṡuc term₂) = CodeTerm term₁ term₂
+-- CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃
+-- CodeTerm (μ̇ term₁) (μ̇ term₂) = CodeTerm term₁ term₂
+-- CodeTerm _ _ = ⊥
+
+rTerm : {Γ : Context} → {A : Type} → (term : Γ ⊢ A) → CodeTerm term term
+rTerm (lookup index) = refl
+rTerm (λ̇ term) = rTerm term
+rTerm (term₁ · term₂) = refl , rTerm term₁ , rTerm term₂
+rTerm żero = tt
+rTerm (ṡuc term) = rTerm term
+rTerm (caseℕ̇ term₁ term₂ term₃) = rTerm term₁ , rTerm term₂ , rTerm term₃
+rTerm (μ̇ term) = rTerm term
+
+Term-eq≅CodeTerm : {Γ : Context} → {A : Type}
+    → (term₁ term₂ : Γ ⊢ A)
+    → term₁ ≡ term₂ ≅ CodeTerm term₁ term₂
+Term-eq≅CodeTerm term₁ term₂ = record {
+        to = encodeTerm term₁ term₂;
+        from = decodeTerm term₁ term₂;
+        from∘to = decodeTerm-encodeTerm term₁ term₂;
+        to∘from = encodeTerm-decodeTerm term₁ term₂
+    } where
+        encodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → term₁ ≡ term₂ → CodeTerm term₁ term₂
+        encodeTerm term₁ .term₁ refl = rTerm term₁
+        -- encodeTerm term₁ term₂ p = subst (CodeTerm term₁) p (rTerm term₁)
+
+        decodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → CodeTerm term₁ term₂ → term₁ ≡ term₂
+        decodeTerm (lookup index₁) (lookup .index₁) refl = refl
+        decodeTerm (λ̇ term₁) (λ̇ term₂) code = cong λ̇_ (decodeTerm term₁ term₂ code)
+        -- decodeTerm {Γ} (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) (p , code₁ , code₂) = ?
+        decodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂) (refl , code₁ , code₂) = cong₂ _·_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm żero żero tt = refl
+        decodeTerm (ṡuc term₁) (ṡuc term₂) code = cong ṡuc_ (decodeTerm term₁ term₂ code)
+        decodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (code₁ , code₂ , code₃) = cong₃ caseℕ̇ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃)
+        decodeTerm (μ̇ term₁) (μ̇ term₂) code = cong μ̇_ (decodeTerm term₁ term₂ code)
+
+        decodeTerm-encodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → (p : term₁ ≡ term₂) → decodeTerm term₁ term₂ (encodeTerm term₁ term₂ p) ≡ p
+        decodeTerm-encodeTerm (lookup index₁) .(lookup index₁) refl = refl
+        decodeTerm-encodeTerm (λ̇ term₁) .(λ̇ term₁) refl = cong (cong λ̇_) (decodeTerm-encodeTerm term₁ term₁ refl)
+        -- decodeTerm-encodeTerm {Γ} (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) p = ?
+        decodeTerm-encodeTerm (term₁₁ · term₁₂) .(term₁₁ · term₁₂) refl = cong₂ (cong₂ _·_) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm żero .żero refl = refl
+        decodeTerm-encodeTerm (ṡuc term₁) .(ṡuc term₁) refl = cong (cong ṡuc_) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) .(caseℕ̇ term₁₁ term₁₂ term₁₃) refl = cong₃ (cong₃ caseℕ̇) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl) (decodeTerm-encodeTerm term₁₃ term₁₃ refl)
+        decodeTerm-encodeTerm (μ̇ term₁) .(μ̇ term₁) refl = cong (cong μ̇_) (decodeTerm-encodeTerm term₁ term₁ refl)
+
+        encodeTerm-decodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → (code : CodeTerm term₁ term₂) → encodeTerm term₁ term₂ (decodeTerm term₁ term₂ code) ≡ code
+        encodeTerm-decodeTerm (lookup index₁) (lookup .index₁) refl = refl
+        encodeTerm-decodeTerm (λ̇ term₁) (λ̇ term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂) (refl , code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm żero żero tt = refl
+        encodeTerm-decodeTerm (ṡuc term₁) (ṡuc term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (code₁ , code₂ , code₃)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                decodeTerm term₁₃ term₂₃ code₃ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₃ term₂₃ code₃
+        ... | refl | refl | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (μ̇ term₁) (μ̇ term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+
+        -- encodeTerm-decodeTerm : {Γ : Context} → {A : Type}
+        --     → (term₁ term₂ : Γ ⊢ A)
+        --     → (code : CodeTerm term₁ term₂) → encodeTerm term₁ term₂ (decodeTerm term₁ term₂ code) ≡ code
+        -- encodeTerm-decodeTerm (lookup index₁) (lookup .index₁) refl = refl
+        -- encodeTerm-decodeTerm (λ̇ term₁) (λ̇ term₂) code = trans (subst-cong (CodeTerm (λ̇ term₁)) (decodeTerm term₁ term₂ code)) (encodeTerm-decodeTerm term₁ term₂ code)
+        -- -- encodeTerm-decodeTerm {Γ} (_·_ {A = A₁} {B = B₁} term₁₁ term₁₂) (_·_ {A = A₂} {B = .B₁} term₂₁ term₂₂) (p , code₁ , code₂) = ?
+        -- encodeTerm-decodeTerm {Γ} (_·_ {A = A₁} {B = B₁} term₁₁ term₁₂) (_·_ {A = .A₁} {B = .B₁} term₂₁ term₂₂) (refl , code₁ , code₂) =
+        --     begin
+        --         encodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂) (decodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂) (refl , code₁ , code₂))
+        --     ≡⟨⟩
+        --         encodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂) (cong₂ _·_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂))
+        --     ≡⟨⟩
+        --         subst (CodeTerm (term₁₁ · term₁₂)) (cong₂ _·_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)) (refl , rTerm term₁₁ , rTerm term₁₂)
+        --     ≡⟨ subst-cong₂ (CodeTerm (term₁₁ · term₁₂)) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) ⟩
+        --         subst₂ (λ term₂₁ term₂₂ → CodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂)) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (refl , rTerm term₁₁ , rTerm term₁₂)
+        --     ≡⟨⟩
+        --         subst₂ (λ term₂₁ term₂₂ → Σ (A₁ ≡ A₁) (λ p → CodeTerm (subst (λ A₁ → Γ ⊢ A₁ →̇ B₁) p term₁₁) term₂₁ × CodeTerm (subst (Γ ⊢_) p term₁₂) term₂₂)) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (refl , rTerm term₁₁ , rTerm term₁₂)
+        --         -- subst₂ (λ term₂₁ term₂₂ → Σ (A₁ ≡ A₁) ?) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (refl , rTerm term₁₁ , rTerm term₁₂) -- this is where it stucks if we use the pattern match definition
+        --     ≡⟨ subst₂≡id×subst₂ (A₁ ≡ A₁) (λ term₂₁ term₂₂ p → CodeTerm (subst (λ A₁ → Γ ⊢ A₁ →̇ B₁) p term₁₁) term₂₁ × CodeTerm (subst (Γ ⊢_) p term₁₂) term₂₂) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) ⟩
+        --         refl , subst₂ (λ term₂₁ term₂₂ → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (rTerm term₁₁ , rTerm term₁₂)
+        --     ≡⟨ cong (refl ,_) (subst₂≡subst×subst (CodeTerm term₁₁) (CodeTerm term₁₂) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)) ⟩
+        --         refl , subst (CodeTerm term₁₁) (decodeTerm term₁₁ term₂₁ code₁) (rTerm term₁₁) , subst (CodeTerm term₁₂) (decodeTerm term₁₂ term₂₂ code₂) (rTerm term₁₂)
+        --     ≡⟨⟩
+        --         refl , encodeTerm term₁₁ term₂₁ (decodeTerm term₁₁ term₂₁ code₁) , encodeTerm term₁₂ term₂₂ (decodeTerm term₁₂ term₂₂ code₂)
+        --     ≡⟨ cong₂ (λ x y → refl , x , y) (encodeTerm-decodeTerm term₁₁ term₂₁ code₁) (encodeTerm-decodeTerm term₁₂ term₂₂ code₂) ⟩
+        --         refl , code₁ , code₂
+        --     ∎
+        -- encodeTerm-decodeTerm żero żero tt = refl
+        -- encodeTerm-decodeTerm (ṡuc term₁) (ṡuc term₂) code = trans (subst-cong (CodeTerm (ṡuc term₁)) (decodeTerm term₁ term₂ code)) (encodeTerm-decodeTerm term₁ term₂ code)
+        -- encodeTerm-decodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (code₁ , code₂ , code₃) =
+        --     begin
+        --         encodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (decodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (code₁ , code₂ , code₃))
+        --     ≡⟨⟩
+        --         encodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (cong₃ caseℕ̇ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃))
+        --     ≡⟨⟩
+        --         subst (CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃)) (cong₃ caseℕ̇ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃)) (rTerm term₁₁ , rTerm term₁₂ , rTerm term₁₃)
+        --     ≡⟨ subst-cong₃ (CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃)) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃) ⟩
+        --         subst₃ (λ term₂₁ term₂₂ term₂₃ → CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃)) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃) (rTerm term₁₁ , rTerm term₁₂ , rTerm term₁₃)
+        --     ≡⟨⟩
+        --         subst₃ (λ term₂₁ term₂₂ term₂₃ → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃) (rTerm term₁₁ , rTerm term₁₂ , rTerm term₁₃)
+        --     ≡⟨ subst₃≡subst×subst×subst (CodeTerm term₁₁) (CodeTerm term₁₂) (CodeTerm term₁₃) (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃) ⟩
+        --         subst (CodeTerm term₁₁) (decodeTerm term₁₁ term₂₁ code₁) (rTerm term₁₁) , subst (CodeTerm term₁₂) (decodeTerm term₁₂ term₂₂ code₂) (rTerm term₁₂) , subst (CodeTerm term₁₃) (decodeTerm term₁₃ term₂₃ code₃) (rTerm term₁₃)
+        --     ≡⟨⟩
+        --         encodeTerm term₁₁ term₂₁ (decodeTerm term₁₁ term₂₁ code₁) , encodeTerm term₁₂ term₂₂ (decodeTerm term₁₂ term₂₂ code₂) , encodeTerm term₁₃ term₂₃ (decodeTerm term₁₃ term₂₃ code₃)
+        --     ≡⟨ cong₃ (λ x y z → x , y , z) (encodeTerm-decodeTerm term₁₁ term₂₁ code₁) (encodeTerm-decodeTerm term₁₂ term₂₂ code₂) (encodeTerm-decodeTerm term₁₃ term₂₃ code₃) ⟩
+        --         code₁ , code₂ , code₃
+        --     ∎
+        -- encodeTerm-decodeTerm (μ̇ term₁) (μ̇ term₂) code = trans (subst-cong (CodeTerm (μ̇ term₁)) (decodeTerm term₁ term₂ code)) (encodeTerm-decodeTerm term₁ term₂ code)
+
+CodeTerm-Is-hProp : {Γ : Context} → {A : Type}
+    → (term₁ term₂ : Γ ⊢ A)
+    → Is-hProp (CodeTerm term₁ term₂)
+CodeTerm-Is-hProp (lookup index₁) (lookup index₂) = Index-Is-hSet index₁ index₂
+CodeTerm-Is-hProp (λ̇ term₁) (λ̇ term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) =
+    Σ-Is-hProp (Type-Is-hSet A₁ A₂) λ { refl → ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂) }
+-- CodeTerm-Is-hProp {Γ} (_·_ {A = A₁} {B = B₁} term₁₁ term₁₂) (_·_ {A = A₂} {B = .B₁} term₂₁ term₂₂) =
+--     Σ-Is-hProp (Type-Is-hSet A₁ A₂) (λ p → ×-Is-hProp
+--         (CodeTerm-Is-hProp (subst (λ A₁ → Γ ⊢ A₁ →̇ B₁) p term₁₁) term₂₁)
+--         (CodeTerm-Is-hProp (subst (Γ ⊢_) p term₁₂) term₂₂))
+CodeTerm-Is-hProp żero żero = ⊤-Is-hProp
+CodeTerm-Is-hProp (ṡuc term₁) (ṡuc term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (×-Is-hProp (CodeTerm-Is-hProp term₁₂ term₂₂) (CodeTerm-Is-hProp term₁₃ term₂₃))
+CodeTerm-Is-hProp (μ̇ term₁) (μ̇ term₂) = CodeTerm-Is-hProp term₁ term₂
+
+Term-Is-hSet : {Γ : Context} → {A : Type} → Is-hSet (Γ ⊢ A)
+Term-Is-hSet term₁ term₂ = ≅-Is-hProp (Term-eq≅CodeTerm term₁ term₂) (CodeTerm-Is-hProp term₁ term₂)

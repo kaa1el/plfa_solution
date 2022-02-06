@@ -2,6 +2,8 @@
 
 module plfa.part1.Quantifiers where
 
+open import Agda.Primitive
+
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; cong₂; subst)
 open Eq.≡-Reasoning
@@ -12,22 +14,27 @@ open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Function using (_∘_)
+open import Function using (id; _∘_)
 
 open import plfa.part1.Induction using (suc-inj; +-cancel-r; *-cancel-r; *-cancel-l)
 open import plfa.part1.Relations using (Even; Odd)
-open import plfa.part1.Isomorphism using (_≅_; extensionality; Π-extensionality)
+open import plfa.part1.Equality using (subst-cong; subst₂; subst-cong₂; subst₂≡subst×subst)
+open import plfa.part1.Isomorphism using (_≅_; extensionality; Π-extensionality; Is-hProp; Is-hSet; ⊤-Is-hProp; ⊥-Is-hProp; ×-Is-hProp; Σ-eq-iso; hProp-iso; ≅-Is-hProp)
 open import plfa.part1.Connectives using (Color)
 
-Π : (A : Set) → (B : A → Set) → Set
+private
+    variable
+        i j k l : Level
+
+Π : (A : Set i) → (B : A → Set j) → Set (i ⊔ j)
 Π A B = (x : A) → B x
 
-η-Π : {A : Set} → {B : A → Set}
+η-Π : {A : Set i} → {B : A → Set j}
     → (f : Π A B)
     → (λ x → f x) ≡ f
 η-Π f = refl
 
-Π-elim : {A : Set} → {B : A → Set}
+Π-elim : {A : Set i} → {B : A → Set j}
     → (f : Π A B)
     → (x : A)
     → B x
@@ -35,14 +42,14 @@ open import plfa.part1.Connectives using (Color)
 
 open _≅_
 
-Π-distrib-× : {A : Set} → {B C : A → Set}
+Π-distrib-× : {A : Set i} → {B : A → Set j} → {C : A → Set k}
     → Π A (λ x → B x × C x) ≅ Π A B × Π A C
 Π-distrib-× .to f = (λ x → f x .proj₁) , (λ x → f x .proj₂)
 Π-distrib-× .from (g , h) = λ x → (g x) , (h x)
 Π-distrib-× .from∘to _ = refl
 Π-distrib-× .to∘from _ = refl
 
-⊎Π-implies-Π⊎ : {A : Set} → {B C : A → Set}
+⊎Π-implies-Π⊎ : {A : Set i} → {B : A → Set j} → {C : A → Set k}
     → Π A B ⊎ Π A C → Π A (λ x → B x ⊎ C x)
 ⊎Π-implies-Π⊎ (inj₁ f) x = inj₁ (f x)
 ⊎Π-implies-Π⊎ (inj₂ g) x = inj₂ (g x)
@@ -54,7 +61,7 @@ open _≅_
 
 open Color
 
-Π-× : (B : Color → Set)
+Π-× : (B : Color {i} → Set j)
     → Π Color B ≅ B red × B green × B blue
 Π-× B .to f = f red , f green , f blue
 Π-× B .from (r , g , b) red = r
@@ -63,26 +70,26 @@ open Color
 Π-× B .from∘to f = Π-extensionality λ { red → refl; green → refl; blue → refl }
 Π-× B .to∘from _ = refl
 
-Σ-elim : {A : Set} → {B : A → Set} -> {C : Set}
+Σ-elim : {A : Set i} → {B : A → Set j} -> {C : Set k}
     → ((x : A) → B x → C)
     → Σ A B → C -- this is just a special case of the dependent curry/uncurry
 Σ-elim f (x , y) = f x y
 
-ΠΣ-currying : {A : Set} → {B : A → Set} -> {C : Set}
+ΠΣ-currying : {A : Set i} → {B : A → Set j} -> {C : Set k}
     → ((x : A) → B x → C) ≅ (Σ A B → C) -- this is just a special case of the dependent curry/uncurry
 ΠΣ-currying .to f (x , y) = f x y
 ΠΣ-currying .from g x y = g (x , y)
 ΠΣ-currying .from∘to f = refl
 ΠΣ-currying .to∘from g = extensionality λ { (x , y) → refl }
 
-currying : {A : Set} → {B : A → Set} -> {C : (x : A) → B x → Set}
+currying : {A : Set i} → {B : A → Set j} -> {C : (x : A) → B x → Set k}
     → ((x : A) → (y : B x) → C x y) ≅ ((w : Σ A B) → C (proj₁ w) (proj₂ w)) -- this is the dependent curry/uncurry
 currying .to f (x , y) = f x y
 currying .from g x y = g (x , y)
 currying .from∘to f = refl
 currying .to∘from g = Π-extensionality λ { (x , y) → refl }
 
-Σ-distrib-⊎ : {A : Set} → {B C : A → Set}
+Σ-distrib-⊎ : {A : Set i} → {B : A → Set j} → {C : A → Set k}
     → Σ A (λ x → B x ⊎ C x) ≅ Σ A B ⊎ Σ A C
 Σ-distrib-⊎ .to (x , inj₁ y) = inj₁ (x , y)
 Σ-distrib-⊎ .to (x , inj₂ z) = inj₂ (x , z)
@@ -93,7 +100,7 @@ currying .to∘from g = Π-extensionality λ { (x , y) → refl }
 Σ-distrib-⊎ .to∘from (inj₁ (x , y)) = refl
 Σ-distrib-⊎ .to∘from (inj₂ (x , z)) = refl
 
-Σ×-implies-xΣ : {A : Set} → {B C : A → Set}
+Σ×-implies-xΣ : {A : Set i} → {B : A → Set j} → {C : A → Set k}
     → Σ A (λ x → B x × C x) → (Σ A B) × (Σ A C)
 Σ×-implies-xΣ (x , y , z) = (x , y) , (x , z)
 
@@ -102,7 +109,7 @@ currying .to∘from g = Π-extensionality λ { (x , y) → refl }
 -- B false = Empty, B true = Unit
 -- C false = Unit, C true = Empty
 
-Σ-⊎ : (B : Color → Set)
+Σ-⊎ : (B : Color {i} → Set j)
     → Σ Color B ≅ B red ⊎ B green ⊎ B blue
 Σ-⊎ B .to (red , r) = inj₁ r
 Σ-⊎ B .to (green , g) = inj₂ (inj₁ g)
@@ -137,108 +144,67 @@ Odd-Σodd (Odd.suc x) with Even-Σeven x
 Σeven-Even (suc m , refl) = Even.suc (Σodd-Odd (m , refl))
 Σodd-Odd (m , refl) = Odd.suc (Σeven-Even (m , refl))
 
-Is-Contractible : Set → Set
-Is-Contractible A = Σ A (λ x → (y : A) → x ≡ y)
+Codeℕ : ℕ → ℕ → Set
+Codeℕ zero zero = ⊤
+Codeℕ zero (suc m) = ⊥
+Codeℕ (suc n) zero = ⊥
+Codeℕ (suc n) (suc m) = Codeℕ n m
 
-Is-hProp : Set → Set
-Is-hProp A = (x y : A) → x ≡ y
+rℕ : (n : ℕ) → Codeℕ n n
+rℕ zero = tt
+rℕ (suc n) = rℕ n
 
-Is-hSet : Set → Set
-Is-hSet A = (x y : A) → Is-hProp (x ≡ y)
+ℕ-eq≅Codeℕ : (n m : ℕ) → n ≡ m ≅ Codeℕ n m -- HoTT Book Theorem 2.13.1
+ℕ-eq≅Codeℕ n m = record {
+        to = encodeℕ n m;
+        from = decodeℕ n m;
+        from∘to = decodeℕ-encodeℕ n m;
+        to∘from = encodeℕ-decodeℕ n m
+    } where
+        encodeℕ : (n m : ℕ) → n ≡ m → Codeℕ n m
+        encodeℕ n .n refl = rℕ n
+        -- encodeℕ n m p = subst (Codeℕ n) p (rℕ n)
 
-×-Is-hProp : (A B : Set) → Is-hProp A → Is-hProp B → Is-hProp (A × B)
-×-Is-hProp A B p q (x1 , y1) (x2 , y2) = cong₂ _,_ (p x1 x2) (q y1 y2)
+        decodeℕ : (n m : ℕ) → Codeℕ n m → n ≡ m
+        decodeℕ zero zero tt = refl
+        decodeℕ (suc n) (suc m) code = cong suc (decodeℕ n m code)
 
-→-Is-hProp : (A B : Set) → Is-hProp B → Is-hProp (A → B)
-→-Is-hProp A B q f g = extensionality λ x → q (f x) (g x)
+        decodeℕ-encodeℕ : (n m : ℕ) → (p : n ≡ m) → decodeℕ n m (encodeℕ n m p) ≡ p
+        decodeℕ-encodeℕ zero .zero refl = refl
+        decodeℕ-encodeℕ (suc n) .(suc n) refl = cong (cong suc) (decodeℕ-encodeℕ n n refl)
 
-Π-Is-hProp : (A : Set) → (P : A → Set) → ((x : A) → Is-hProp (P x)) → Is-hProp ((x : A) → P x)
-Π-Is-hProp A P q f g = Π-extensionality (λ x → q x (f x) (g x))
+        encodeℕ-decodeℕ :(n m : ℕ) → (code : Codeℕ n m) → encodeℕ n m (decodeℕ n m code) ≡ code
+        encodeℕ-decodeℕ zero zero tt = refl
+        encodeℕ-decodeℕ (suc n) (suc m) code with decodeℕ n m code | encodeℕ-decodeℕ n m code
+        ... | refl | refl = refl
 
-code : ℕ → ℕ → Set
-code zero zero = ⊤
-code zero (suc m) = ⊥
-code (suc n) zero = ⊥
-code (suc n) (suc m) = code n m
+        -- encodeℕ-decodeℕ :(n m : ℕ) → (code : Codeℕ n m) → encodeℕ n m (decodeℕ n m code) ≡ code
+        -- encodeℕ-decodeℕ zero zero tt = refl
+        -- encodeℕ-decodeℕ (suc n) (suc m) code = -- trans (subst-cong (Codeℕ (suc n)) (decodeℕ n m code)) (encodeℕ-decodeℕ n m code)
+        --     begin
+        --         encodeℕ (suc n) (suc m) (decodeℕ (suc n) (suc m) code)
+        --     ≡⟨⟩
+        --         encodeℕ (suc n) (suc m) (cong suc (decodeℕ n m code))
+        --     ≡⟨⟩
+        --         subst (Codeℕ (suc n)) (cong suc (decodeℕ n m code)) (rℕ (suc n))
+        --     ≡⟨ subst-cong (Codeℕ (suc n)) (decodeℕ n m code) ⟩ -- HoTT Book Lemma 2.3.10
+        --         subst (λ k → Codeℕ (suc n) (suc k)) (decodeℕ n m code) (rℕ (suc n))
+        --     ≡⟨⟩
+        --         subst (λ k → Codeℕ n k) (decodeℕ n m code) (rℕ n)
+        --     ≡⟨⟩
+        --         subst (Codeℕ n) (decodeℕ n m code) (rℕ n)
+        --     ≡⟨⟩
+        --         encodeℕ n m (decodeℕ n m code)
+        --     ≡⟨ encodeℕ-decodeℕ n m code ⟩
+        --         code
+        --     ∎
 
-r : (n : ℕ) → code n n
-r zero = tt
-r (suc n) = r n
-
-encode : (n m : ℕ) → n ≡ m → code n m
-encode n m p = subst (code n) p (r n) -- encode n n refl ≡ r n
-
-decode : (n m : ℕ) → code n m → n ≡ m
-decode zero zero tt = refl
-decode (suc n) (suc m) c = cong suc (decode n m c)
-
-subst-cong : {A B : Set}
-    → {f : A → B}
-    → (P : B → Set)
-    → {x y : A}
-    → {u : P (f x)}
-    → (e : x ≡ y)
-    → subst P (cong f e) u ≡ subst (λ x → P (f x)) e u -- HoTT Book Lemma 2.3.10
-subst-cong P refl = refl
-
-ℕ-eq≅code : (n m : ℕ) → n ≡ m ≅ code n m -- HoTT Book Theorem 2.13.1
-ℕ-eq≅code n m .to = encode n m
-ℕ-eq≅code n m .from = decode n m
-ℕ-eq≅code zero .zero .from∘to refl = refl
-ℕ-eq≅code (suc n) .(suc n) .from∘to refl = cong (cong suc) (ℕ-eq≅code n n .from∘to refl)
-ℕ-eq≅code zero zero .to∘from tt = refl
-ℕ-eq≅code (suc n) (suc m) .to∘from c = -- trans (subst-cong (code (suc n)) (decode n m c)) (ℕ-eq≅code n m .to∘from c)
-    begin
-        encode (suc n) (suc m) (decode (suc n) (suc m) c)
-    ≡⟨⟩
-        encode (suc n) (suc m) (cong suc (decode n m c))
-    ≡⟨⟩
-        subst (code (suc n)) (cong suc (decode n m c)) (r (suc n))
-    ≡⟨ subst-cong (code (suc n)) (decode n m c) ⟩ -- HoTT Book Lemma 2.3.10
-        subst (λ k → code (suc n) (suc k)) (decode n m c) (r (suc n))
-    ≡⟨⟩
-        subst (λ k → code n k) (decode n m c) (r n)
-    ≡⟨⟩
-        subst (code n) (decode n m c) (r n)
-    ≡⟨⟩
-        encode n m (decode n m c)
-    ≡⟨ ℕ-eq≅code n m .to∘from c ⟩
-        c
-    ∎
-
-Unit-Is-hProp : Is-hProp ⊤
-Unit-Is-hProp tt tt = refl
-
-Empty-Is-hProp : Is-hProp ⊥
-Empty-Is-hProp () ()
-
-code-Is-hProp : (n m : ℕ) → Is-hProp (code n m)
-code-Is-hProp zero zero = Unit-Is-hProp
-code-Is-hProp (suc n) (suc m) = code-Is-hProp n m
-
-≅-Is-hProp : {A B : Set} → A ≅ B → Is-hProp B → Is-hProp A
-≅-Is-hProp iso p x y =
-    begin
-        x
-    ≡⟨ sym (iso .from∘to x) ⟩
-        iso .from (iso .to x)
-    ≡⟨ cong (iso .from) (p (iso .to x) (iso .to y)) ⟩
-        iso .from (iso .to y)
-    ≡⟨ iso .from∘to y ⟩
-        y
-    ∎
+Codeℕ-Is-hProp : (n m : ℕ) → Is-hProp (Codeℕ n m)
+Codeℕ-Is-hProp zero zero = ⊤-Is-hProp
+Codeℕ-Is-hProp (suc n) (suc m) = Codeℕ-Is-hProp n m
 
 ℕ-Is-hSet : Is-hSet ℕ
-ℕ-Is-hSet n m = ≅-Is-hProp (ℕ-eq≅code n m) (code-Is-hProp n m)
-
-hProp-iso : {A B : Set}
-    → Is-hProp A → Is-hProp B
-    → (A → B) → (B → A) -- we can also package these conditions into a record type (uncurrying)
-    → A ≅ B
-hProp-iso p q f g .to = f
-hProp-iso p q f g .from = g
-hProp-iso p q f g .from∘to x = p (g (f x)) x
-hProp-iso p q f g .to∘from y = q (f (g y)) y
+ℕ-Is-hSet n m = ≅-Is-hProp (ℕ-eq≅Codeℕ n m) (Codeℕ-Is-hProp n m)
 
 Even-Is-hProp : {n : ℕ} → Is-hProp (Even n)
 Odd-Is-hProp : {n : ℕ} → Is-hProp (Odd n)
@@ -320,14 +286,14 @@ open _≤_
 ≤≅Σ≤ : {n m : ℕ} → n ≤ m ≅ Σ ℕ (λ k → k + n ≡ m)
 ≤≅Σ≤ = hProp-iso ≤-Is-hProp Σ≤-Is-hProp ≤-Σ≤ Σ≤-≤
 
-¬Σ≅Π¬ : {A : Set} → {B : A → Set}
+¬Σ≅Π¬ : {A : Set i} → {B : A → Set j}
     → ¬ Σ A B ≅ Π A (¬_ ∘ B)
 ¬Σ≅Π¬ .to f x y = f (x , y)
 ¬Σ≅Π¬ .from g (x , y) = g x y
 ¬Σ≅Π¬ .from∘to f = extensionality (λ { (x , y) → refl })
 ¬Σ≅Π¬ .to∘from g = refl
 
-Σ¬→¬Π : {A : Set} → {B : A → Set}
+Σ¬→¬Π : {A : Set i} → {B : A → Set j}
     → Σ A (¬_ ∘ B) → ¬ Π A B
 Σ¬→¬Π (x , f) g = f (g x)
 
@@ -337,10 +303,10 @@ open _≤_
 -- as shown below in ¬Π¬¬→¬¬Σ¬, furthermore, the converse is logically equivalent to excluded middle, see NotPiAsSigma
 -- in Negation.agda
 
-¬-Is-hProp : {A : Set} → Is-hProp (¬ A)
+¬-Is-hProp : {A : Set i} → Is-hProp (¬ A)
 ¬-Is-hProp f g = extensionality λ x → ⊥-elim (f x)
 
-¬¬¬≅¬ : {A : Set} → ¬ ¬ ¬ A ≅ ¬ A
+¬¬¬≅¬ : {A : Set i} → ¬ ¬ ¬ A ≅ ¬ A
 ¬¬¬≅¬ = record {
         to = λ f x → f λ g → g x;
         from = λ f g → g f;
@@ -348,11 +314,11 @@ open _≤_
         to∘from = λ f → refl
     }
 
-¬Π¬¬→¬¬Σ¬¬¬ : {A : Set} → {B : A → Set}
+¬Π¬¬→¬¬Σ¬¬¬ : {A : Set i} → {B : A → Set j}
     → ¬ Π A (¬_ ∘ ¬_ ∘ B) → ¬ ¬ Σ A (¬_ ∘ ¬_ ∘ ¬_ ∘ B)
 ¬Π¬¬→¬¬Σ¬¬¬ f g = f (λ x h → g (x , λ j → j h))
 
-¬Π¬¬→¬¬Σ¬ : {A : Set} → {B : A → Set}
+¬Π¬¬→¬¬Σ¬ : {A : Set i} → {B : A → Set j}
     → ¬ Π A (¬_ ∘ ¬_ ∘ B) → ¬ ¬ Σ A (¬_ ∘ B)
 ¬Π¬¬→¬¬Σ¬ f g = f (λ x h → g (x , h))
 
@@ -376,84 +342,67 @@ Can-Is-hProp (fromOne justI) (fromOne justI) = refl
 Can-Is-hProp (fromOne (caseO p)) (fromOne (caseO q)) = cong fromOne (One-Is-hProp (caseO p) (caseO q))
 Can-Is-hProp (fromOne (caseI p)) (fromOne (caseI q)) = cong fromOne (One-Is-hProp (caseI p) (caseI q))
 
-Σ-eq-iso : {A : Set} → {B : A → Set}
-    → {x1 x2 : A} → {y1 : B x1} → {y2 : B x2}
-    → (x1 , y1) ≡ (x2 , y2) ≅ Σ (x1 ≡ x2) (λ p → subst B p y1 ≡ y2)
-Σ-eq-iso .to refl = refl , refl
-Σ-eq-iso .from (refl , refl) = refl
-Σ-eq-iso .from∘to refl = refl
-Σ-eq-iso .to∘from (refl , refl) = refl
-
 ℕ≅ΣBinCan : ℕ ≅ Σ Bin Can
 ℕ≅ΣBinCan .to n = toBin n , can-toBin n
 ℕ≅ΣBinCan .from (x , p) = fromBin x
 ℕ≅ΣBinCan .from∘to = fromBin-toBin
 ℕ≅ΣBinCan .to∘from (x , p) = Σ-eq-iso .from (can-toBin-fromBin x p , Can-Is-hProp (subst Can (can-toBin-fromBin x p) (can-toBin (fromBin x))) p)
 
-Σ-Is-Prop-iso : {Z A : Set} → {P : A → Set}
-    → (to : Z → A)
-    → (from : A → Z)
-    → (from∘to : (z : Z) → from (to z) ≡ z)
-    → ({x : A} → Is-hProp (P x))
-    → (to-P : (z : Z) → P (to z))
-    → (P-to∘from : (x : A) → P x → to (from x) ≡ x)
-    → Z ≅ Σ A P
-Σ-Is-Prop-iso {P = P} f g g∘f P-Is-hProp f-P P-f∘g = record {
-        to = λ z → (f z) , (f-P z);
-        from = λ { (x , p) → g x };
-        from∘to = g∘f;
-        to∘from = λ { (x , p) → Σ-eq-iso .from (P-f∘g x p , P-Is-hProp (subst P (P-f∘g x p) (f-P (g x))) p) }
-    }
+-- Bonus: use encode-decode to prove Bin-Is-hSet
 
--- Bonus: use encode-decode to prove Is-hSet Bin
+CodeBin : Bin → Bin → Set
+CodeBin ⟨⟩ ⟨⟩ = ⊤
+CodeBin ⟨⟩ (y O) = ⊥
+CodeBin ⟨⟩ (y I) = ⊥
+CodeBin (x O) ⟨⟩ = ⊥
+CodeBin (x O) (y O) = CodeBin x y
+CodeBin (x O) (y I) = ⊥
+CodeBin (x I) ⟨⟩ = ⊥
+CodeBin (x I) (y O) = ⊥
+CodeBin (x I) (y I) = CodeBin x y
 
-codeBin : Bin → Bin → Set
-codeBin ⟨⟩ ⟨⟩ = ⊤
-codeBin ⟨⟩ (y O) = ⊥
-codeBin ⟨⟩ (y I) = ⊥
-codeBin (x O) ⟨⟩ = ⊥
-codeBin (x O) (y O) = codeBin x y
-codeBin (x O) (y I) = ⊥
-codeBin (x I) ⟨⟩ = ⊥
-codeBin (x I) (y O) = ⊥
-codeBin (x I) (y I) = codeBin x y
-
-rBin : (x : Bin) → codeBin x x
+rBin : (x : Bin) → CodeBin x x
 rBin ⟨⟩ = tt
 rBin (x O) = rBin x
 rBin (x I) = rBin x
 
-encodeBin : (x y : Bin) → x ≡ y → codeBin x y
-encodeBin x y p = subst (codeBin x) p (rBin x)
+Bin-eq≅CodeBin : (x y : Bin) → x ≡ y ≅ CodeBin x y
+Bin-eq≅CodeBin x y = record {
+        to = encodeBin x y;
+        from = decodeBin x y;
+        from∘to = decodeBin-encodeBin x y;
+        to∘from = encodeBin-decodeBin x y
+    } where
+        encodeBin : (x y : Bin) → x ≡ y → CodeBin x y
+        encodeBin x .x refl = rBin x
+        -- encodeBin x y p = subst (CodeBin x) p (rBin x)
 
-decodeBin : (x y : Bin) → codeBin x y → x ≡ y
-decodeBin ⟨⟩ ⟨⟩ tt = refl
-decodeBin (x O) (y O) c = cong _O (decodeBin x y c)
-decodeBin (x I) (y I) c = cong _I (decodeBin x y c)
+        decodeBin : (x y : Bin) → CodeBin x y → x ≡ y
+        decodeBin ⟨⟩ ⟨⟩ tt = refl
+        decodeBin (x O) (y O) code = cong _O (decodeBin x y code)
+        decodeBin (x I) (y I) code = cong _I (decodeBin x y code)
 
-Bin-eq≅codeBin : (x y : Bin) → x ≡ y ≅ codeBin x y
-Bin-eq≅codeBin x y .to = encodeBin x y
-Bin-eq≅codeBin x y .from = decodeBin x y
-Bin-eq≅codeBin ⟨⟩ .⟨⟩ .from∘to refl = refl
-Bin-eq≅codeBin (x O) .(x O) .from∘to refl = cong (cong _O) (Bin-eq≅codeBin x x .from∘to refl)
-Bin-eq≅codeBin (x I) .(x I) .from∘to refl = cong (cong _I) (Bin-eq≅codeBin x x .from∘to refl)
-Bin-eq≅codeBin ⟨⟩ ⟨⟩ .to∘from tt = refl
-Bin-eq≅codeBin (x O) (y O) .to∘from c = trans (subst-cong (codeBin (x O)) (decodeBin x y c)) (Bin-eq≅codeBin x y .to∘from c)
-Bin-eq≅codeBin (x I) (y I) .to∘from c = trans (subst-cong (codeBin (x I)) (decodeBin x y c)) (Bin-eq≅codeBin x y .to∘from c)
+        decodeBin-encodeBin : (x y : Bin) → (p : x ≡ y) → decodeBin x y (encodeBin x y p) ≡ p
+        decodeBin-encodeBin ⟨⟩ .⟨⟩ refl = refl
+        decodeBin-encodeBin (x O) .(x O) refl = cong (cong _O) (decodeBin-encodeBin x x refl)
+        decodeBin-encodeBin (x I) .(x I) refl = cong (cong _I) (decodeBin-encodeBin x x refl)
 
-codeBin-Is-hProp : (x y : Bin) → Is-hProp (codeBin x y)
-codeBin-Is-hProp ⟨⟩ ⟨⟩ = Unit-Is-hProp
-codeBin-Is-hProp ⟨⟩ (y O) = Empty-Is-hProp
-codeBin-Is-hProp ⟨⟩ (y I) = Empty-Is-hProp
-codeBin-Is-hProp (x O) ⟨⟩ = Empty-Is-hProp
-codeBin-Is-hProp (x O) (y O) = codeBin-Is-hProp x y
-codeBin-Is-hProp (x O) (y I) = Empty-Is-hProp
-codeBin-Is-hProp (x I) ⟨⟩ = Empty-Is-hProp
-codeBin-Is-hProp (x I) (y O) = Empty-Is-hProp
-codeBin-Is-hProp (x I) (y I) = codeBin-Is-hProp x y
+        encodeBin-decodeBin : (x y : Bin) → (code : CodeBin x y) → encodeBin x y (decodeBin x y code) ≡ code
+        encodeBin-decodeBin ⟨⟩ ⟨⟩ tt = refl
+        encodeBin-decodeBin (x O) (y O) code with decodeBin x y code | encodeBin-decodeBin x y code
+        ... | refl | refl = refl
+        -- encodeBin-decodeBin (x O) (y O) code = trans (subst-cong (CodeBin (x O)) (decodeBin x y code)) (encodeBin-decodeBin x y code)
+        encodeBin-decodeBin (x I) (y I) code with decodeBin x y code | encodeBin-decodeBin x y code
+        ... | refl | refl = refl
+        -- encodeBin-decodeBin (x I) (y I) code = trans (subst-cong (CodeBin (x I)) (decodeBin x y code)) (encodeBin-decodeBin x y code)
+
+CodeBin-Is-hProp : (x y : Bin) → Is-hProp (CodeBin x y)
+CodeBin-Is-hProp ⟨⟩ ⟨⟩ = ⊤-Is-hProp
+CodeBin-Is-hProp (x O) (y O) = CodeBin-Is-hProp x y
+CodeBin-Is-hProp (x I) (y I) = CodeBin-Is-hProp x y
 
 Bin-Is-hSet : Is-hSet Bin
-Bin-Is-hSet x y = ≅-Is-hProp (Bin-eq≅codeBin x y) (codeBin-Is-hProp x y)
+Bin-Is-hSet x y = ≅-Is-hProp (Bin-eq≅CodeBin x y) (CodeBin-Is-hProp x y)
 -- Bin-Is-hSet ⟨⟩ ⟨⟩ refl refl = refl
 -- Bin-Is-hSet (x O) (.x O) refl refl = refl
 -- Bin-Is-hSet (x I) (.x I) refl refl = refl
@@ -710,3 +659,90 @@ toℕb∘fromℕb (2+2* x) =
 ℕ≅ℕb .to∘from = toℕb∘fromℕb
 
 -- import Data.Product using (Σ; _,_; ∃; Σ-syntax; ∃-syntax)
+
+-- Bonus: use encode-decode to prove Tree-Is-hSet
+
+data Tree : Set where
+    leaf : Tree
+    node : Tree → Tree → Tree
+
+CodeTree : Tree → Tree → Set
+CodeTree leaf leaf = ⊤
+CodeTree leaf (node tree₂₁ tree₂₂) = ⊥
+CodeTree (node tree₁₁ tree₁₂) leaf = ⊥
+CodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) = CodeTree tree₁₁ tree₂₁ × CodeTree tree₁₂ tree₂₂
+
+rTree : (tree : Tree) → CodeTree tree tree
+rTree leaf = tt
+rTree (node tree₁ tree₂) = (rTree tree₁) , (rTree tree₂)
+
+Tree-eq≅CodeTree : (tree₁ tree₂ : Tree) → tree₁ ≡ tree₂ ≅ CodeTree tree₁ tree₂
+Tree-eq≅CodeTree tree₁ tree₂ = record {
+        to = encodeTree tree₁ tree₂;
+        from = decodeTree tree₁ tree₂;
+        from∘to = decodeTree-encodeTree tree₁ tree₂;
+        to∘from = encodeTree-decodeTree tree₁ tree₂
+    } where
+        encodeTree : (tree₁ tree₂ : Tree) → tree₁ ≡ tree₂ → CodeTree tree₁ tree₂
+        encodeTree tree₁ .tree₁ refl = rTree tree₁
+        -- encodeTree tree₁ tree₂ p = subst (CodeTree tree₁) p (rTree tree₁)
+
+        decodeTree : (tree₁ tree₂ : Tree) → CodeTree tree₁ tree₂ → tree₁ ≡ tree₂
+        decodeTree leaf leaf tt = refl
+        decodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) (code₁ , code₂) = cong₂ node (decodeTree tree₁₁ tree₂₁ code₁) (decodeTree tree₁₂ tree₂₂ code₂)
+
+        decodeTree-encodeTree : (tree₁ tree₂ : Tree) → (p : tree₁ ≡ tree₂) → decodeTree tree₁ tree₂ (encodeTree tree₁ tree₂ p) ≡ p
+        decodeTree-encodeTree leaf .leaf refl = refl
+        decodeTree-encodeTree (node tree₁₁ tree₁₂) .(node tree₁₁ tree₁₂) refl = cong₂ (cong₂ node) (decodeTree-encodeTree tree₁₁ tree₁₁ refl) (decodeTree-encodeTree tree₁₂ tree₁₂ refl)
+            -- begin
+            --     decodeTree (node tree₁₁ tree₁₂) (node tree₁₁ tree₁₂) (encodeTree (node tree₁₁ tree₁₂) (node tree₁₁ tree₁₂) refl)
+            -- ≡⟨⟩
+            --     decodeTree (node tree₁₁ tree₁₂) (node tree₁₁ tree₁₂) (rTree tree₁₁ , rTree tree₁₂)
+            -- ≡⟨⟩
+            --     cong₂ node (decodeTree tree₁₁ tree₁₁ (rTree tree₁₁)) (decodeTree tree₁₂ tree₁₂ (rTree tree₁₂))
+            -- ≡⟨⟩
+            --     cong₂ node (decodeTree tree₁₁ tree₁₁ (encodeTree tree₁₁ tree₁₁ refl)) (decodeTree tree₁₂ tree₁₂ (encodeTree tree₁₂ tree₁₂ refl))
+            -- ≡⟨ cong₂ (cong₂ node) (decodeTree-encodeTree tree₁₁ tree₁₁ refl) (decodeTree-encodeTree tree₁₂ tree₁₂ refl) ⟩
+            --     cong₂ node refl refl
+            -- ≡⟨⟩
+            --     refl
+            -- ∎
+
+        encodeTree-decodeTree : (tree₁ tree₂ : Tree) → (code : CodeTree tree₁ tree₂) → encodeTree tree₁ tree₂ (decodeTree tree₁ tree₂ code) ≡ code
+        encodeTree-decodeTree leaf leaf tt = refl
+        encodeTree-decodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) (code₁ , code₂)
+            with
+                decodeTree tree₁₁ tree₂₁ code₁ |
+                decodeTree tree₁₂ tree₂₂ code₂ |
+                encodeTree-decodeTree tree₁₁ tree₂₁ code₁ |
+                encodeTree-decodeTree tree₁₂ tree₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        
+        -- encodeTree-decodeTree : (tree₁ tree₂ : Tree) → (code : CodeTree tree₁ tree₂) → encodeTree tree₁ tree₂ (decodeTree tree₁ tree₂ code) ≡ code
+        -- encodeTree-decodeTree leaf leaf tt = refl
+        -- encodeTree-decodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) (code₁ , code₂) =
+        --     begin
+        --         encodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) (decodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) (code₁ , code₂))
+        --     ≡⟨⟩
+        --         encodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) (cong₂ node (decodeTree tree₁₁ tree₂₁ code₁) (decodeTree tree₁₂ tree₂₂ code₂))
+        --     ≡⟨⟩
+        --         subst (CodeTree (node tree₁₁ tree₁₂)) (cong₂ node (decodeTree tree₁₁ tree₂₁ code₁) (decodeTree tree₁₂ tree₂₂ code₂)) (rTree tree₁₁ , rTree tree₁₂)
+        --     ≡⟨ subst-cong₂ (CodeTree (node tree₁₁ tree₁₂)) (decodeTree tree₁₁ tree₂₁ code₁) (decodeTree tree₁₂ tree₂₂ code₂) ⟩
+        --         subst₂ (λ tree₂₁ tree₂₂ → CodeTree (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂)) (decodeTree tree₁₁ tree₂₁ code₁) (decodeTree tree₁₂ tree₂₂ code₂) (rTree tree₁₁ , rTree tree₁₂)
+        --     ≡⟨⟩
+        --         subst₂ (λ tree₂₁ tree₂₂ → CodeTree tree₁₁ tree₂₁ × CodeTree tree₁₂ tree₂₂) (decodeTree tree₁₁ tree₂₁ code₁) (decodeTree tree₁₂ tree₂₂ code₂) (rTree tree₁₁ , rTree tree₁₂)
+        --     ≡⟨ subst₂≡subst×subst (CodeTree tree₁₁) (CodeTree tree₁₂) (decodeTree tree₁₁ tree₂₁ code₁) (decodeTree tree₁₂ tree₂₂ code₂) ⟩
+        --         subst (CodeTree tree₁₁) (decodeTree tree₁₁ tree₂₁ code₁) (rTree tree₁₁) , subst (CodeTree tree₁₂) (decodeTree tree₁₂ tree₂₂ code₂) (rTree tree₁₂)
+        --     ≡⟨⟩
+        --         encodeTree tree₁₁ tree₂₁ (decodeTree tree₁₁ tree₂₁ code₁) , encodeTree tree₁₂ tree₂₂ (decodeTree tree₁₂ tree₂₂ code₂)
+        --     ≡⟨ cong₂ _,_ (encodeTree-decodeTree tree₁₁ tree₂₁ code₁) (encodeTree-decodeTree tree₁₂ tree₂₂ code₂) ⟩
+        --         code₁ , code₂
+        --     ∎
+
+CodeTree-Is-hProp : (tree₁ tree₂ : Tree) → Is-hProp (CodeTree tree₁ tree₂)
+CodeTree-Is-hProp leaf leaf = ⊤-Is-hProp
+CodeTree-Is-hProp (node tree₁₁ tree₁₂) (node tree₂₁ tree₂₂) = ×-Is-hProp (CodeTree-Is-hProp tree₁₁ tree₂₁) (CodeTree-Is-hProp tree₁₂ tree₂₂)
+
+Tree-Is-hSet : Is-hSet Tree
+Tree-Is-hSet tree₁ tree₂ = ≅-Is-hProp (Tree-eq≅CodeTree tree₁ tree₂) (CodeTree-Is-hProp tree₁ tree₂)
+  

@@ -2,20 +2,15 @@
 
 module plfa.part2.Lambda where
 
-open import Data.Bool using (T; not)
 open import Data.Empty using (⊥; ⊥-elim)
-open import Data.Unit using (⊤; tt)
 open import Data.List using (List; _∷_; [])
-open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product using (Σ; _×_; _,_)
 open import Data.String using (String; _≟_)
 open import Relation.Nullary using (Dec; yes; no; ¬_)
 open import Relation.Nullary.Decidable using (⌊_⌋; False; toWitnessFalse)
-open import Relation.Nullary.Negation using (¬?)
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; cong; subst; _≢_)
 
-open import plfa.part1.Isomorphism using (_≅_; _≲_)
-open import plfa.part1.Quantifiers using (Is-hProp; Σ-Is-Prop-iso)
+open import plfa.part1.Isomorphism using (_≅_; _≲_; Is-hProp; Σ-Is-Prop-iso)
 
 -- Gordon Plotkin's Programmable Computable Functions (PCF) (1977)
 
@@ -287,9 +282,9 @@ data Is-Canonical : {t s : Term} → t ⟶⋆′ s → Set where
         → Is-Canonical reductions
         → Is-Canonical (trans′ (step′ reduction) reductions)
 
-⟶⋆≅Σ⟶⋆′Is-Canonical : {t s : Term}
-    → t ⟶⋆ s ≅ Σ (t ⟶⋆′ s) Is-Canonical
-⟶⋆≅Σ⟶⋆′Is-Canonical = Σ-Is-Prop-iso to from from∘to Is-Canonical-Is-hProp to-Is-Canonical Is-Canonical→to∘from
+Σ⟶⋆′Is-Canonical≅⟶⋆ : {t s : Term}
+    → Σ (t ⟶⋆′ s) Is-Canonical ≅ t ⟶⋆ s
+Σ⟶⋆′Is-Canonical≅⟶⋆ = Σ-Is-Prop-iso Is-Canonical-Is-hProp to from from∘to to-Is-Canonical Is-Canonical→to∘from
     where
         to : {t s : Term}
             → t ⟶⋆ s → t ⟶⋆′ s

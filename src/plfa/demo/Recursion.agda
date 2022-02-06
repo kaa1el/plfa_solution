@@ -346,7 +346,7 @@ ind-ℕ′-βz {P} pz ps =
         subst P (cong proj₁ (r-ℕ-βz xz xs)) (proj₂ (r-ℕ xz xs zero))
     ≡⟨ subst-cong P (r-ℕ-βz xz xs) ⟩
         subst (P ∘ proj₁) (r-ℕ-βz xz xs) (proj₂ (r-ℕ xz xs zero))
-    ≡⟨ congd proj₂ (r-ℕ-βz xz xs) ⟩
+    ≡⟨ cong-d proj₂ (r-ℕ-βz xz xs) ⟩
         proj₂ xz
     ≡⟨⟩
         pz
@@ -385,7 +385,7 @@ ind-ℕ′-βs {P} pz ps n =
             (subst P
                 (ind-ℕ′-1-βs pz ps n)
                 (proj₂ (r-ℕ xz xs (suc n)))) -- proj₂ (xs (r-ℕ xz xs n))
-    ≡⟨ cong (λ e → subst (P ∘ suc) (ind-ℕ′-1-β pz ps n) (subst P (ind-ℕ′-1-βs pz ps n) e)) (sym (congd proj₂ (sym (r-ℕ-βs xz xs n)))) ⟩
+    ≡⟨ cong (λ e → subst (P ∘ suc) (ind-ℕ′-1-β pz ps n) (subst P (ind-ℕ′-1-βs pz ps n) e)) (sym (cong-d proj₂ (sym (r-ℕ-βs xz xs n)))) ⟩
         subst (P ∘ suc)
             (ind-ℕ′-1-β pz ps n)
             (subst P
@@ -441,7 +441,7 @@ ind-ℕ′-βs {P} pz ps n =
         subst (P ∘ suc ∘ proj₁)
             (lift (proj₂ (r-ℕ xz xs n)) (ind-ℕ′-1-β pz ps n))
             (uncurry ps (r-ℕ xz xs n))
-    ≡⟨ congd (uncurry ps) (lift (proj₂ (r-ℕ xz xs n)) (ind-ℕ′-1-β pz ps n)) ⟩
+    ≡⟨ cong-d (uncurry ps) (lift (proj₂ (r-ℕ xz xs n)) (ind-ℕ′-1-β pz ps n)) ⟩
         uncurry ps (n , subst P (ind-ℕ′-1-β pz ps n) (proj₂ (r-ℕ xz xs n)))
     ≡⟨⟩
         ps n (subst P (ind-ℕ′-1-β pz ps n) (proj₂ (r-ℕ xz xs n)))

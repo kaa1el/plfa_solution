@@ -308,7 +308,7 @@ _ = refl
 _ : fromBin (⟨⟩ I O O) ≡ 4
 _ = refl
 
-fromBin-bsuc : (b : Bin) → fromBin (bsuc b) ≡ suc (fromBin b)
+fromBin-bsuc : (b : Bin) → fromBin (bsuc b) ≡ suc (fromBin b)
 fromBin-bsuc ⟨⟩ = refl
 fromBin-bsuc (b O) = refl
 fromBin-bsuc (b I) rewrite fromBin-bsuc b | +-suc (fromBin b) (fromBin b) = refl

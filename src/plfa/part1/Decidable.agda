@@ -2,6 +2,8 @@
 
 module plfa.part1.Decidable where
 
+open import Agda.Primitive
+
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans; cong; subst; _≢_)
 open Eq.≡-Reasoning
@@ -13,12 +15,15 @@ open import Relation.Nullary using (¬_)
 open import Relation.Nullary.Negation using (contradiction)
 open import Data.Unit using (⊤; tt)
 open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Bool using (Bool; false; true)
 
 open import plfa.part1.Induction using (suc-inj)
 open import plfa.part1.Relations using (_≤_; z≤n; s≤s; _<_; z<s; s<s)
-open import plfa.part1.Isomorphism using (_≅_; _⇔_)
-open import plfa.part1.Connectives using (Bool; false; true)
-open import plfa.part1.Quantifiers using (Is-hProp; Empty-Is-hProp; Unit-Is-hProp; hProp-iso)
+open import plfa.part1.Isomorphism using (_≅_; _⇔_; Is-hProp; ⊥-Is-hProp; ⊤-Is-hProp; hProp-iso)
+
+private
+    variable
+        i j k l : Level
 
 2≤4 : 2 ≤ 4
 2≤4 = s≤s (s≤s z≤n)
@@ -79,8 +84,8 @@ T→≡ true tt = refl
 open _≅_
 
 T-Is-hProp : (n m : ℕ) → Is-hProp (T (n ≤ᵇ m))
-T-Is-hProp zero m = Unit-Is-hProp
-T-Is-hProp (suc n) zero = Empty-Is-hProp
+T-Is-hProp zero m = ⊤-Is-hProp
+T-Is-hProp (suc n) zero = ⊥-Is-hProp
 T-Is-hProp (suc n) (suc m) = T-Is-hProp n m
 
 ≤-Is-hProp : (n m : ℕ) → Is-hProp (n ≤ m)
@@ -90,7 +95,7 @@ T-Is-hProp (suc n) (suc m) = T-Is-hProp n m
 ≤ᵇ≅≤ : (n m : ℕ) → T (n ≤ᵇ m) ≅ n ≤ m
 ≤ᵇ≅≤ n m = hProp-iso (T-Is-hProp n m) (≤-Is-hProp n m) (≤ᵇ→≤ n m) (≤→≤ᵇ n m)
 
-data Dec (A : Set) : Set where
+data Dec (A : Set i) : Set i where
     yes : A → Dec A
     no : ¬ A → Dec A
 
@@ -142,26 +147,26 @@ n ≤?′ m with n ≤ᵇ m | ≤ᵇ→≤ n m | ≤→≤ᵇ n m
 -- ... | false = yes (≤ᵇ→≤ n m tt)
 -- ... | true = no (≤→≤ᵇ n m)
 
-test : {P : ℕ → Set} → (n m : ℕ) → P (n + m) → P (m + n)
+test : {P : ℕ → Set i} → (n m : ℕ) → P (n + m) → P (m + n)
 test n m t with n + m | +-comm n m
 -- ... | x | p = ?
 ... | .(m + n) | refl = t
 -- test n m t with +-comm n m | n + m
 -- ... | p | x = ?
 
-⌊_⌋ : {A : Set} → Dec A → Bool
+⌊_⌋ : {A : Set i} → Dec A → Bool
 ⌊ yes _ ⌋ = true
 ⌊ no _ ⌋ = false
 
 _≤ᵇ′_ : ℕ → ℕ → Bool
 n ≤ᵇ′ m = ⌊ n ≤? m ⌋
 
-toWitness : {A : Set} → {x : Dec A} → T ⌊ x ⌋ → A
-toWitness {A} {yes p} _ = p
+toWitness : {A : Set i} → {x : Dec A} → T ⌊ x ⌋ → A
+toWitness {A = A} {yes p} _ = p
 
-fromWitness : {A : Set} → {x : Dec A} → A → T ⌊ x ⌋
-fromWitness {A} {yes _} _ = tt
-fromWitness {A} {no f} x = f x
+fromWitness : {A : Set i} → {x : Dec A} → A → T ⌊ x ⌋
+fromWitness {A = A} {yes _} _ = tt
+fromWitness {A = A} {no f} x = f x
 
 ≤ᵇ′→≤ : {n m : ℕ} → T (n ≤ᵇ′ m) → n ≤ m
 ≤ᵇ′→≤ = toWitness
@@ -175,7 +180,7 @@ false ∧ _ = false
 true ∧ b = b
 
 infixr 6 _×-dec_
-_×-dec_ : {A B : Set} → Dec A → Dec B → Dec (A × B)
+_×-dec_ : {A : Set i} → {B : Set j} → Dec A → Dec B → Dec (A × B)
 yes p ×-dec yes q = yes (p , q)
 yes _ ×-dec no g = no (λ z → g (proj₂ z))
 no f ×-dec _ = no (λ z → f (proj₁ z))
@@ -186,7 +191,7 @@ false ∨ b = b
 true ∨ _ = true
 
 infixr 5 _⊎-dec_
-_⊎-dec_ : {A B : Set} → Dec A → Dec B → Dec (A ⊎ B)
+_⊎-dec_ : {A : Set i} → {B : Set j} → Dec A → Dec B → Dec (A ⊎ B)
 yes p ⊎-dec _ = yes (inj₁ p)
 no f ⊎-dec yes q = yes (inj₂ q)
 no f ⊎-dec no g = no λ { (inj₁ x) → f x; (inj₂ y) → g y }
@@ -195,7 +200,7 @@ not : Bool → Bool
 not false = true
 not true = false
 
-¬? : {A : Set} → Dec A → Dec (¬ A)
+¬? : {A : Set i} → Dec A → Dec (¬ A)
 ¬? (yes p) = no λ f → f p
 ¬? (no f) = yes f
 
@@ -203,7 +208,7 @@ _⊃_ : Bool → Bool → Bool
 false ⊃ _ = true
 true ⊃ b = b
 
-_→-dec_ : {A B : Set} → Dec A → Dec B → Dec (A → B)
+_→-dec_ : {A : Set i} → {B : Set j} → Dec A → Dec B → Dec (A → B)
 yes _ →-dec yes q = yes λ _ → q
 yes p →-dec no g = no (λ h → g (h p))
 no f →-dec q = yes λ x → ⊥-elim (f x)
@@ -213,7 +218,7 @@ false iff false = true
 false iff true = false
 true iff b = b
 
-_⇔-dec_ : {A B : Set} → Dec A → Dec B → Dec (A ⇔ B)
+_⇔-dec_ : {A : Set i} → {B : Set j} → Dec A → Dec B → Dec (A ⇔ B)
 yes p ⇔-dec yes q = yes (record { to = λ _ → q; from = λ _ → p })
 yes p ⇔-dec no g = no (λ z → g (_⇔_.to z p))
 no f ⇔-dec yes q = no (λ z → f (_⇔_.from z q))
@@ -221,21 +226,21 @@ no f ⇔-dec no g = yes (record { to = λ x → ⊥-elim (f x); from = λ y → 
 
 -- erasure
 
-∧-× : {A B : Set} → (x : Dec A) → (y : Dec B) → ⌊ x ⌋ ∧ ⌊ y ⌋ ≡ ⌊ x ×-dec y ⌋
+∧-× : {A : Set i} → {B : Set j} → (x : Dec A) → (y : Dec B) → ⌊ x ⌋ ∧ ⌊ y ⌋ ≡ ⌊ x ×-dec y ⌋
 ∧-× (yes _) (yes _) = refl
 ∧-× (yes _) (no _) = refl
 ∧-× (no _) _ = refl
 
-∨-⊎ : {A B : Set} → (x : Dec A) → (y : Dec B) → ⌊ x ⌋ ∨ ⌊ y ⌋ ≡ ⌊ x ⊎-dec y ⌋
+∨-⊎ : {A : Set i} → {B : Set j} → (x : Dec A) → (y : Dec B) → ⌊ x ⌋ ∨ ⌊ y ⌋ ≡ ⌊ x ⊎-dec y ⌋
 ∨-⊎ (yes _) _ = refl
 ∨-⊎ (no _) (yes _) = refl
 ∨-⊎ (no _) (no _) = refl
 
-not-¬ : {A : Set} → (x : Dec A) → not ⌊ x ⌋ ≡ ⌊ ¬? x ⌋
+not-¬ : {A : Set i} → (x : Dec A) → not ⌊ x ⌋ ≡ ⌊ ¬? x ⌋
 not-¬ (yes _) = refl
 not-¬ (no _) = refl
 
-iff-⇔ : {A B : Set} → (x : Dec A) → (y : Dec B) → ⌊ x ⌋ iff ⌊ y ⌋ ≡ ⌊ x ⇔-dec y ⌋
+iff-⇔ : {A : Set i} → {B : Set j} → (x : Dec A) → (y : Dec B) → ⌊ x ⌋ iff ⌊ y ⌋ ≡ ⌊ x ⇔-dec y ⌋
 iff-⇔ (yes _) (yes _) = refl
 iff-⇔ (yes _) (no _) = refl
 iff-⇔ (no _) (yes _) = refl
@@ -249,23 +254,29 @@ _ : minus 5 3 (s≤s (s≤s (s≤s z≤n))) ≡ 2
 _ = refl
 
 _-_ : (n m : ℕ) → {T ⌊ m ≤? n ⌋} → ℕ
-_-_ n m {p} = minus n m (toWitness p)
+_-_ n m {t} = minus n m (toWitness t)
 
 _ : 5 - 3 ≡ 2
 _ = refl
 
-True : {A : Set} → Dec A → Set
+_-′_ : (n m : ℕ) → {m ≤ n} → ℕ
+_-′_ n m {p} = minus n m p
+
+-- _ : 5 -′ 3 ≡ 2 -- does not work
+-- _ = refl
+
+True : {A : Set i} → Dec A → Set
 True x = T ⌊ x ⌋
 
-False : {A : Set} → Dec A → Set
+False : {A : Set i} → Dec A → Set
 False x = T (not ⌊ x ⌋)
 
-toWitnessFalse : {A : Set} → {x : Dec A} → False x → ¬ A
-toWitnessFalse {A} {no f} _ = f
+toWitnessFalse : {A : Set i} → {x : Dec A} → False x → ¬ A
+toWitnessFalse {A = A} {no f} _ = f
 
-fromWitnessFalse : {A : Set} → {x : Dec A} → ¬ A → False x
-fromWitnessFalse {A} {yes p} f = ⊥-elim (f p)
-fromWitnessFalse {A} {no _} _ = tt
+fromWitnessFalse : {A : Set i} → {x : Dec A} → ¬ A → False x
+fromWitnessFalse {A = A} {yes p} f = ⊥-elim (f p)
+fromWitnessFalse {A = A} {no _} _ = tt
 
 -- import Data.Bool.Base using (Bool; true; false; T; _∧_; _∨_; not)
 -- import Data.Nat using (_≤?_)

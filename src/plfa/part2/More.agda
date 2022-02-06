@@ -3,12 +3,16 @@
 module plfa.part2.More where
 
 open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Unit using (⊤; tt)
 open import Data.Nat using (ℕ; zero; suc; _+_; _*_; _<_; _<?_; z≤n; s≤s)
 open import Data.List using (List; []; _∷_; _++_)
+open import Data.List.Relation.Unary.Any using (Any; here; there)
+open import Data.List.Membership.Propositional using (_∈_)
+open import Data.Product using (Σ; _×_; _,_)
 open import Function using (_∘_; flip)
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness)
-open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; subst)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; cong₂; subst)
 
 infixr 7 _→̇_
 infixr 8 _+̇_
@@ -90,6 +94,8 @@ data _⊢_ : Context → Type → Set where
     -- primitive natural number type
     prim : {Γ : Context} -- primitive natural numbers
         → ℕ
+        → Γ ⊢ ℕ̂
+    ẑero : {Γ : Context} -- primitive natural number zero
         → Γ ⊢ ℕ̂
     ŝuc_ : {Γ : Context} -- primitive natural number successor
         → Γ ⊢ ℕ̂
@@ -195,6 +201,7 @@ reindex-to-rebase ρ (caseℕ̇ term₁ term₂ term₃) = caseℕ̇ (reindex-to
 reindex-to-rebase ρ (μ̇ term) = μ̇ (reindex-to-rebase (extend-reindex ρ) term)
 reindex-to-rebase ρ (l̇et term₁ term₂) = l̇et (reindex-to-rebase ρ term₁) (reindex-to-rebase (extend-reindex ρ) term₂)
 reindex-to-rebase ρ (prim n) = prim n
+reindex-to-rebase ρ ẑero = ẑero
 reindex-to-rebase ρ (ŝuc term) = ŝuc (reindex-to-rebase ρ term)
 reindex-to-rebase ρ (term₁ +̂ term₂) = reindex-to-rebase ρ term₁ +̂ reindex-to-rebase ρ term₂
 reindex-to-rebase ρ (term₁ *̂ term₂) = reindex-to-rebase ρ term₁ *̂ reindex-to-rebase ρ term₂
@@ -233,6 +240,7 @@ substitute σ (caseℕ̇ term₁ term₂ term₃) = caseℕ̇ (substitute σ ter
 substitute σ (μ̇ term) = μ̇ substitute (extend σ) term
 substitute σ (l̇et term₁ term₂) = l̇et (substitute σ term₁) (substitute (extend σ) term₂)
 substitute σ (prim n) = prim n
+substitute σ ẑero = ẑero
 substitute σ (ŝuc term) = ŝuc (substitute σ term)
 substitute σ (term₁ +̂ term₂) = substitute σ term₁ +̂ substitute σ term₂
 substitute σ (term₁ *̂ term₂) = substitute σ term₁ *̂ substitute σ term₂
@@ -293,7 +301,7 @@ _[_][_] {Γ} {A} {B} {C} term₁ term₂ term₃ = substitute {Γ ‚ A ‚ B} {
 --     → (term₂ : Γ ⊢ A)
 --     → (term₃ : Γ ⊢ B)
 --     → term₁ [ term₂ ][ term₃ ] ≡ term₁ [ shift term₃ ] [ term₂ ]
--- double-substitute {Γ} {A} {B} {C} term₁ term₂ term₃ = ?
+-- double-substitute {Γ} {A} {B} {C} term₁ term₂ term₃ = ? -- see DoubleSubstitutionMore.agda
 
 data Value : {Γ : Context} → {A : Type} → Γ ⊢ A → Set where
     value-λ̇ : {Γ : Context} → {A B : Type} → {term : Γ ‚ A ⊢ B}
@@ -342,7 +350,7 @@ data _⟶_ : {Γ : Context} → {A : Type} → (Γ ⊢ A) → (Γ ⊢ A) → Set
     β-μ̇ : {Γ : Context} → {A : Type}
         → {term : Γ ‚ A ⊢ A}
         → μ̇ term ⟶ term [ μ̇ term ]
-    β-l̇et : {Γ : Context} → {A B : Type} -- l̇et term₁ term₂ ≡ term₂ [ term₁ ] ≡ (λ̇ term₂) · term₁
+    β-l̇et : {Γ : Context} → {A B : Type} -- l̇et term₁ term₂ ~ (λ̇ term₂) · term₁ ⟶ term₂ [ term₁ ]
         → {term₁ : Γ ⊢ A} → {term₂ : Γ ‚ A ⊢ B}
         → Value term₁
         → l̇et term₁ term₂ ⟶ term₂ [ term₁ ]
@@ -381,6 +389,8 @@ data _⟶_ : {Γ : Context} → {A : Type} → (Γ ⊢ A) → (Γ ⊢ A) → Set
         → Value term₂
         → caseL̇ist (term₁ ∷̇ term₂) term₃ term₄ ⟶ term₄ [ term₁ ][ term₂ ]
     -- delta rules (primitive types)
+    δ-ẑero : {Γ : Context}
+        → ẑero {Γ} ⟶ prim zero
     δ-ŝuc : {Γ : Context} → {n : ℕ}
         → ŝuc (prim {Γ} n) ⟶ prim (suc n)
     δ-+̂ : {Γ : Context} → {n m : ℕ}
@@ -552,6 +562,7 @@ progress (l̇et term₁ term₂) with progress term₁
 ... | step reduction₁ = step (ξ-l̇et reduction₁)
 ... | done value₁ = step (β-l̇et value₁)
 progress (prim n) = done value-prim
+progress ẑero = step δ-ẑero
 progress (ŝuc term) with progress term
 ... | step reduction = step (ξ-ŝuc reduction)
 ... | done value-prim = step δ-ŝuc
@@ -612,9 +623,6 @@ value? : {A : Type}
 value? term with progress term
 ... | step reduction = no (¬[reducible×value] reduction)
 ... | done value = yes value
--- value? typing with progress typing
--- ... | step p = no (¬[reducible×value] p)
--- ... | done value = yes value
 
 record Gas : Set where
     constructor gas
@@ -655,6 +663,17 @@ _ = begin
         (prim 4) *̂ (prim 2)
     ⟶⟨ δ-*̂ ⟩
         prim 8
+    ∎
+
+test2 : {Γ : Context} → {n : ℕ}
+    → ẑero {Γ} *̂ (prim n) ⟶⋆ (prim 0)
+test2 {n = n} =
+    begin
+        ẑero *̂ (prim n)
+    ⟶⟨ ξ-*̂₁ δ-ẑero ⟩
+        (prim 0) *̂ (prim n)
+    ⟶⟨ δ-*̂ ⟩
+        prim 0
     ∎
 
 exp10 : [] ⊢ ℕ̂ →̇ ℕ̂
@@ -858,6 +877,7 @@ determinism (β-case×̇ value₁₁ value₁₂) (ξ-case×̇ reduction₂) = �
 determinism β-[̇] β-[̇] = refl
 determinism (β-∷̇ value₁₁ value₁₂) (β-∷̇ value₂₁ value₂₂) = refl
 determinism (β-∷̇ value₁₁ value₁₂) (ξ-caseL̇ist reduction₂) = ⊥-elim (¬[value×reducible] (value-∷̇ value₁₁ value₁₂) reduction₂)
+determinism δ-ẑero δ-ẑero = refl
 determinism δ-ŝuc δ-ŝuc = refl
 determinism δ-+̂ δ-+̂ = refl
 determinism δ-*̂ δ-*̂ = refl
@@ -903,3 +923,984 @@ determinism (ξ-∷̇₂ value₁ reduction₁) (ξ-∷̇₁ reduction₂) = ⊥
 determinism (ξ-∷̇₂ {term₁ = term₁} value₁ reduction₁) (ξ-∷̇₂ value₂ reduction₂) = cong (term₁ ∷̇_) (determinism reduction₁ reduction₂)
 determinism (ξ-caseL̇ist reduction₁) (β-∷̇ value₂₁ value₂₂) = ⊥-elim (¬[value×reducible] (value-∷̇ value₂₁ value₂₂) reduction₁)
 determinism (ξ-caseL̇ist {term₂ = term₂} {term₃ = term₃} reduction₁) (ξ-caseL̇ist reduction₂) = cong (λ term₁ → caseL̇ist term₁ term₂ term₃) (determinism reduction₁ reduction₂)
+
+-- Bonus: use encode-decode to prove Term-Is-hSet
+
+open import plfa.part1.Equality using (cong₃)
+open import plfa.part1.Isomorphism using (_≅_; _≲_; Is-hProp; Is-hSet; Is-hGroupoid; ×-Is-hProp; Σ-Is-hProp; ⊤-Is-hProp; ⊥-Is-hProp; Is-hSet-implies-Is-hGroupoid; hProp-iso; ≅-Is-hProp; ≅-Is-hSet)
+open import plfa.part1.Quantifiers using (ℕ-Is-hSet; Tree; leaf; node; Tree-Is-hSet)
+open import plfa.part1.Lists using (Membership-Is-hSet)
+
+CodeType : Type → Type → Set
+CodeType ℕ̇ ℕ̇ = ⊤
+CodeType ℕ̇ ℕ̂ = ⊥
+CodeType ℕ̇ 𝟙̇ = ⊥
+CodeType ℕ̇ 𝟘̇ = ⊥
+CodeType ℕ̇ (B₁ →̇ B₂) = ⊥
+CodeType ℕ̇ (B₁ ×̇ B₂) = ⊥
+CodeType ℕ̇ (B₁ +̇ B₂) = ⊥
+CodeType ℕ̇ (L̇ist B) = ⊥
+CodeType ℕ̂ ℕ̇ = ⊥
+CodeType ℕ̂ ℕ̂ = ⊤
+CodeType ℕ̂ 𝟙̇ = ⊥
+CodeType ℕ̂ 𝟘̇ = ⊥
+CodeType ℕ̂ (B₁ →̇ B₂) = ⊥
+CodeType ℕ̂ (B₁ ×̇ B₂) = ⊥
+CodeType ℕ̂ (B₁ +̇ B₂) = ⊥
+CodeType ℕ̂ (L̇ist B) = ⊥
+CodeType 𝟙̇ ℕ̇ = ⊥
+CodeType 𝟙̇ ℕ̂ = ⊥
+CodeType 𝟙̇ 𝟙̇ = ⊤
+CodeType 𝟙̇ 𝟘̇ = ⊥
+CodeType 𝟙̇ (B₁ →̇ B₂) = ⊥
+CodeType 𝟙̇ (B₁ ×̇ B₂) = ⊥
+CodeType 𝟙̇ (B₁ +̇ B₂) = ⊥
+CodeType 𝟙̇ (L̇ist B) = ⊥
+CodeType 𝟘̇ ℕ̇ = ⊥
+CodeType 𝟘̇ ℕ̂ = ⊥
+CodeType 𝟘̇ 𝟙̇ = ⊥
+CodeType 𝟘̇ 𝟘̇ = ⊤
+CodeType 𝟘̇ (B₁ →̇ B₂) = ⊥
+CodeType 𝟘̇ (B₁ ×̇ B₂) = ⊥
+CodeType 𝟘̇ (B₁ +̇ B₂) = ⊥
+CodeType 𝟘̇ (L̇ist B) = ⊥
+CodeType (A₁ →̇ A₂) ℕ̇ = ⊥
+CodeType (A₁ →̇ A₂) ℕ̂ = ⊥
+CodeType (A₁ →̇ A₂) 𝟙̇ = ⊥
+CodeType (A₁ →̇ A₂) 𝟘̇ = ⊥
+CodeType (A₁ →̇ A₂) (B₁ →̇ B₂) = CodeType A₁ B₁ × CodeType A₂ B₂
+CodeType (A₁ →̇ A₂) (B₁ ×̇ B₂) = ⊥
+CodeType (A₁ →̇ A₂) (B₁ +̇ B₂) = ⊥
+CodeType (A₁ →̇ A₂) (L̇ist B) = ⊥
+CodeType (A₁ ×̇ A₂) ℕ̇ = ⊥
+CodeType (A₁ ×̇ A₂) ℕ̂ = ⊥
+CodeType (A₁ ×̇ A₂) 𝟙̇ = ⊥
+CodeType (A₁ ×̇ A₂) 𝟘̇ = ⊥
+CodeType (A₁ ×̇ A₂) (B₁ →̇ B₂) = ⊥
+CodeType (A₁ ×̇ A₂) (B₁ ×̇ B₂) = CodeType A₁ B₁ × CodeType A₂ B₂
+CodeType (A₁ ×̇ A₂) (B₁ +̇ B₂) = ⊥
+CodeType (A₁ ×̇ A₂) (L̇ist B) = ⊥
+CodeType (A₁ +̇ A₂) ℕ̇ = ⊥
+CodeType (A₁ +̇ A₂) ℕ̂ = ⊥
+CodeType (A₁ +̇ A₂) 𝟙̇ = ⊥
+CodeType (A₁ +̇ A₂) 𝟘̇ = ⊥
+CodeType (A₁ +̇ A₂) (B₁ →̇ B₂) = ⊥
+CodeType (A₁ +̇ A₂) (B₁ ×̇ B₂) = ⊥
+CodeType (A₁ +̇ A₂) (B₁ +̇ B₂) = CodeType A₁ B₁ × CodeType A₂ B₂
+CodeType (A₁ +̇ A₂) (L̇ist B) = ⊥
+CodeType (L̇ist A) ℕ̇ = ⊥
+CodeType (L̇ist A) ℕ̂ = ⊥
+CodeType (L̇ist A) 𝟙̇ = ⊥
+CodeType (L̇ist A) 𝟘̇ = ⊥
+CodeType (L̇ist A) (B₁ →̇ B₂) = ⊥
+CodeType (L̇ist A) (B₁ ×̇ B₂) = ⊥
+CodeType (L̇ist A) (B₁ +̇ B₂) = ⊥
+CodeType (L̇ist A) (L̇ist B) = CodeType A B
+
+rType : (A : Type) → CodeType A A
+rType ℕ̇ = tt
+rType ℕ̂ = tt
+rType 𝟙̇ = tt
+rType 𝟘̇ = tt
+rType (A₁ →̇ A₂) = rType A₁ , rType A₂
+rType (A₁ ×̇ A₂) = rType A₁ , rType A₂
+rType (A₁ +̇ A₂) = rType A₁ , rType A₂
+rType (L̇ist A) = rType A
+
+Type-eq≅CodeType : (A B : Type) → A ≡ B ≅ CodeType A B
+Type-eq≅CodeType A B = record {
+        to = encodeType A B;
+        from = decodeType A B;
+        from∘to = decodeType-encodeType A B;
+        to∘from = encodeType-decodeType A B
+    } where
+        encodeType : (A B : Type) → A ≡ B → CodeType A B
+        encodeType A .A refl = rType A
+
+        decodeType : (A B : Type) → CodeType A B → A ≡ B
+        decodeType ℕ̇ ℕ̇ tt = refl
+        decodeType ℕ̂ ℕ̂ tt = refl
+        decodeType 𝟙̇ 𝟙̇ tt = refl
+        decodeType 𝟘̇ 𝟘̇ tt = refl
+        decodeType (A₁ →̇ A₂) (B₁ →̇ B₂) (code₁ , code₂) = cong₂ _→̇_ (decodeType A₁ B₁ code₁) (decodeType A₂ B₂ code₂)
+        decodeType (A₁ ×̇ A₂) (B₁ ×̇ B₂) (code₁ , code₂) = cong₂ _×̇_ (decodeType A₁ B₁ code₁) (decodeType A₂ B₂ code₂)
+        decodeType (A₁ +̇ A₂) (B₁ +̇ B₂) (code₁ , code₂) = cong₂ _+̇_ (decodeType A₁ B₁ code₁) (decodeType A₂ B₂ code₂)
+        decodeType (L̇ist A) (L̇ist B) code = cong L̇ist (decodeType A B code)
+
+        decodeType-encodeType : (A B : Type) → (p : A ≡ B) → decodeType A B (encodeType A B p) ≡ p
+        decodeType-encodeType ℕ̇ .ℕ̇ refl = refl
+        decodeType-encodeType ℕ̂ .ℕ̂ refl = refl
+        decodeType-encodeType 𝟙̇ .𝟙̇ refl = refl
+        decodeType-encodeType 𝟘̇ .𝟘̇ refl = refl
+        decodeType-encodeType (A₁ →̇ A₂) .(A₁ →̇ A₂) refl = cong₂ (cong₂ _→̇_) (decodeType-encodeType A₁ A₁ refl) (decodeType-encodeType A₂ A₂ refl)
+        decodeType-encodeType (A₁ ×̇ A₂) .(A₁ ×̇ A₂) refl = cong₂ (cong₂ _×̇_) (decodeType-encodeType A₁ A₁ refl) (decodeType-encodeType A₂ A₂ refl)
+        decodeType-encodeType (A₁ +̇ A₂) .(A₁ +̇ A₂) refl = cong₂ (cong₂ _+̇_) (decodeType-encodeType A₁ A₁ refl) (decodeType-encodeType A₂ A₂ refl)
+        decodeType-encodeType (L̇ist A) .(L̇ist A) refl = cong (cong L̇ist) (decodeType-encodeType A A refl)
+
+        encodeType-decodeType : (A B : Type) → (code : CodeType A B) → encodeType A B (decodeType A B code) ≡ code
+        encodeType-decodeType ℕ̇ ℕ̇ tt = refl
+        encodeType-decodeType ℕ̂ ℕ̂ tt = refl
+        encodeType-decodeType 𝟙̇ 𝟙̇ tt = refl
+        encodeType-decodeType 𝟘̇ 𝟘̇ tt = refl
+        encodeType-decodeType (A₁ →̇ A₂) (B₁ →̇ B₂) (code₁ , code₂)
+            with
+                decodeType A₁ B₁ code₁ |
+                decodeType A₂ B₂ code₂ |
+                encodeType-decodeType A₁ B₁ code₁ |
+                encodeType-decodeType A₂ B₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeType-decodeType (A₁ ×̇ A₂) (B₁ ×̇ B₂) (code₁ , code₂)
+            with
+                decodeType A₁ B₁ code₁ |
+                decodeType A₂ B₂ code₂ |
+                encodeType-decodeType A₁ B₁ code₁ |
+                encodeType-decodeType A₂ B₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeType-decodeType (A₁ +̇ A₂) (B₁ +̇ B₂) (code₁ , code₂)
+            with
+                decodeType A₁ B₁ code₁ |
+                decodeType A₂ B₂ code₂ |
+                encodeType-decodeType A₁ B₁ code₁ |
+                encodeType-decodeType A₂ B₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeType-decodeType (L̇ist A) (L̇ist B) code
+            with
+                decodeType A B code |
+                encodeType-decodeType A B code
+        ... | refl | refl = refl
+
+CodeType-Is-hProp : (A B : Type) → Is-hProp (CodeType A B)
+CodeType-Is-hProp ℕ̇ ℕ̇ = ⊤-Is-hProp
+CodeType-Is-hProp ℕ̂ ℕ̂ = ⊤-Is-hProp
+CodeType-Is-hProp 𝟙̇ 𝟙̇ = ⊤-Is-hProp
+CodeType-Is-hProp 𝟘̇ 𝟘̇ = ⊤-Is-hProp
+CodeType-Is-hProp (A₁ →̇ A₂) (B₁ →̇ B₂) = ×-Is-hProp (CodeType-Is-hProp A₁ B₁) (CodeType-Is-hProp A₂ B₂)
+CodeType-Is-hProp (A₁ ×̇ A₂) (B₁ ×̇ B₂) = ×-Is-hProp (CodeType-Is-hProp A₁ B₁) (CodeType-Is-hProp A₂ B₂)
+CodeType-Is-hProp (A₁ +̇ A₂) (B₁ +̇ B₂) = ×-Is-hProp (CodeType-Is-hProp A₁ B₁) (CodeType-Is-hProp A₂ B₂)
+CodeType-Is-hProp (L̇ist A) (L̇ist B) = CodeType-Is-hProp A B
+
+Type-Is-hSet : Is-hSet Type
+Type-Is-hSet A B = ≅-Is-hProp (Type-eq≅CodeType A B) (CodeType-Is-hProp A B)
+
+Index≅Membership : {Γ : Context} → {A : Type} → Γ ∋ A ≅ A ∈ Γ
+Index≅Membership = record {
+        to = to;
+        from = from;
+        from∘to = from∘to;
+        to∘from = to∘from
+    } where
+        to : {Γ : Context} → {A : Type} → Γ ∋ A → A ∈ Γ
+        to here = here refl
+        to (there index) = there (to index)
+
+        from : {Γ : Context} → {A : Type} → A ∈ Γ → Γ ∋ A
+        from (here refl) = here
+        from (there p) = there (from p)
+
+        from∘to : {Γ : Context} → {A : Type} → (index : Γ ∋ A) → from (to index) ≡ index
+        from∘to here = refl
+        from∘to (there index) = cong there (from∘to index)
+
+        to∘from : {Γ : Context} → {A : Type} → (p : A ∈ Γ) → to (from p) ≡ p
+        to∘from (here refl) = refl
+        to∘from (there p) = cong there (to∘from p)
+
+Index-Is-hSet : {Γ : Context} → {A : Type} → Is-hSet (Γ ∋ A)
+Index-Is-hSet = ≅-Is-hSet Index≅Membership (Membership-Is-hSet (Is-hSet-implies-Is-hGroupoid Type-Is-hSet))
+
+CodeTerm : {Γ : Context} → {A : Type} → (term₁ term₂ : Γ ⊢ A) → Set
+CodeTerm (lookup index₁) (lookup index₂) = index₁ ≡ index₂
+CodeTerm (lookup index₁) (λ̇ term₂) = ⊥
+CodeTerm (lookup index₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (lookup index₁) żero = ⊥
+CodeTerm (lookup index₁) (ṡuc term₂) = ⊥
+CodeTerm (lookup index₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (lookup index₁) (μ̇ term₂) = ⊥
+CodeTerm (lookup index₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (lookup index₁) (prim m) = ⊥
+CodeTerm (lookup index₁) ẑero = ⊥
+CodeTerm (lookup index₁) (ŝuc term₂) = ⊥
+CodeTerm (lookup index₁) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (lookup index₁) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (lookup index₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (lookup index₁) ṫt = ⊥
+CodeTerm (lookup index₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (lookup index₁) (i̇nj₁ term₂) = ⊥
+CodeTerm (lookup index₁) (i̇nj₂ term₂) = ⊥
+CodeTerm (lookup index₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (lookup index₁) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (lookup index₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (lookup index₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (lookup index₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (lookup index₁) [̇] = ⊥
+CodeTerm (lookup index₁) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (lookup index₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (λ̇ term₁) (lookup index₂) = ⊥
+CodeTerm (λ̇ term₁) (λ̇ term₂) = CodeTerm term₁ term₂
+CodeTerm (λ̇ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (λ̇ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (λ̇ term₁) (μ̇ term₂) = ⊥
+CodeTerm (λ̇ term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (λ̇ term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (λ̇ term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (λ̇ term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (λ̇ term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (λ̇ term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (λ̇ term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (λ̇ term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ · term₁₂) (lookup index₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (λ̇ term₂) = ⊥
+CodeTerm (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) = Σ (A₁ ≡ A₂) (λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ })
+CodeTerm (term₁₁ · term₁₂) żero = ⊥
+CodeTerm (term₁₁ · term₁₂) (ṡuc term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ · term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (prim m) = ⊥
+CodeTerm (term₁₁ · term₁₂) ẑero = ⊥
+CodeTerm (term₁₁ · term₁₂) (ŝuc term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) ṫt = ⊥
+CodeTerm (term₁₁ · term₁₂) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (i̇nj₁ term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (i̇nj₂ term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ · term₁₂) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) [̇] = ⊥
+CodeTerm (term₁₁ · term₁₂) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (term₁₁ · term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm żero (lookup index₂) = ⊥
+CodeTerm żero (term₂₁ · term₂₂) = ⊥
+CodeTerm żero żero = ⊤
+CodeTerm żero (ṡuc term₂) = ⊥
+CodeTerm żero (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm żero (μ̇ term₂) = ⊥
+CodeTerm żero (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm żero (case𝟘̇ term₂) = ⊥
+CodeTerm żero (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm żero (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm żero (ṗroj₁ term₂) = ⊥
+CodeTerm żero (ṗroj₂ term₂) = ⊥
+CodeTerm żero (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm żero (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṡuc term₁) (lookup index₂) = ⊥
+CodeTerm (ṡuc term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (ṡuc term₁) żero = ⊥
+CodeTerm (ṡuc term₁) (ṡuc term₂) = CodeTerm term₁ term₂
+CodeTerm (ṡuc term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṡuc term₁) (μ̇ term₂) = ⊥
+CodeTerm (ṡuc term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (ṡuc term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (ṡuc term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ṡuc term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṡuc term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (ṡuc term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (ṡuc term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ṡuc term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (lookup index₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (λ̇ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (term₂₁ · term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) żero = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (ṡuc term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (μ̇ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (prim m) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) ẑero = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (ŝuc term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (case𝟘̇ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) ṫt = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (i̇nj₁ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (i̇nj₂ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (ṗroj₁ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (ṗroj₂ term₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) [̇] = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (μ̇ term₁) (lookup index₂) = ⊥
+CodeTerm (μ̇ term₁) (λ̇ term₂) = ⊥
+CodeTerm (μ̇ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (μ̇ term₁) żero = ⊥
+CodeTerm (μ̇ term₁) (ṡuc term₂) = ⊥
+CodeTerm (μ̇ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (μ̇ term₁) (μ̇ term₂) = CodeTerm term₁ term₂
+CodeTerm (μ̇ term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (μ̇ term₁) (prim m) = ⊥
+CodeTerm (μ̇ term₁) ẑero = ⊥
+CodeTerm (μ̇ term₁) (ŝuc term₂) = ⊥
+CodeTerm (μ̇ term₁) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (μ̇ term₁) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (μ̇ term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (μ̇ term₁) ṫt = ⊥
+CodeTerm (μ̇ term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (μ̇ term₁) (i̇nj₁ term₂) = ⊥
+CodeTerm (μ̇ term₁) (i̇nj₂ term₂) = ⊥
+CodeTerm (μ̇ term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (μ̇ term₁) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (μ̇ term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (μ̇ term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (μ̇ term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (μ̇ term₁) [̇] = ⊥
+CodeTerm (μ̇ term₁) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (μ̇ term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (lookup index₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (λ̇ term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (term₂₁ · term₂₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) żero = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (ṡuc term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (l̇et {A = A₁} term₁₁ term₁₂) (l̇et {A = A₂} term₂₁ term₂₂) = Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ }
+CodeTerm (l̇et term₁₁ term₁₂) (prim m) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) ẑero = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (ŝuc term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) ṫt = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (i̇nj₁ term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (i̇nj₂ term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) [̇] = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (l̇et term₁₁ term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (prim n) (lookup index₂) = ⊥
+CodeTerm (prim n) (term₂₁ · term₂₂) = ⊥
+CodeTerm (prim n) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (prim n) (μ̇ term₂) = ⊥
+CodeTerm (prim n) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (prim n) (prim m) = n ≡ m
+CodeTerm (prim n) ẑero = ⊥
+CodeTerm (prim n) (ŝuc term₂) = ⊥
+CodeTerm (prim n) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (prim n) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (prim n) (case𝟘̇ term₂) = ⊥
+CodeTerm (prim n) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (prim n) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (prim n) (ṗroj₁ term₂) = ⊥
+CodeTerm (prim n) (ṗroj₂ term₂) = ⊥
+CodeTerm (prim n) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (prim n) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm ẑero (lookup index₂) = ⊥
+CodeTerm ẑero (term₂₁ · term₂₂) = ⊥
+CodeTerm ẑero (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm ẑero (μ̇ term₂) = ⊥
+CodeTerm ẑero (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm ẑero (prim m) = ⊥
+CodeTerm ẑero ẑero = ⊤
+CodeTerm ẑero (ŝuc term₂) = ⊥
+CodeTerm ẑero (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm ẑero (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm ẑero (case𝟘̇ term₂) = ⊥
+CodeTerm ẑero (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm ẑero (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm ẑero (ṗroj₁ term₂) = ⊥
+CodeTerm ẑero (ṗroj₂ term₂) = ⊥
+CodeTerm ẑero (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm ẑero (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ŝuc term₁) (lookup index₂) = ⊥
+CodeTerm (ŝuc term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (ŝuc term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ŝuc term₁) (μ̇ term₂) = ⊥
+CodeTerm (ŝuc term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (ŝuc term₁) (prim m) = ⊥
+CodeTerm (ŝuc term₁) ẑero = ⊥
+CodeTerm (ŝuc term₁) (ŝuc term₂) = CodeTerm term₁ term₂
+CodeTerm (ŝuc term₁) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (ŝuc term₁) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (ŝuc term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (ŝuc term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ŝuc term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ŝuc term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (ŝuc term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (ŝuc term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ŝuc term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (lookup index₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (term₂₁ · term₂₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (prim m) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) ẑero = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (ŝuc term₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (term₂₁ +̂ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+CodeTerm (term₁₁ +̂ term₁₂) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ +̂ term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (lookup index₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (term₂₁ · term₂₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (prim m) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) ẑero = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (ŝuc term₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (term₂₁ *̂ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+CodeTerm (term₁₁ *̂ term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ *̂ term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case𝟘̇ term₁) (lookup index₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (λ̇ term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) żero = ⊥
+CodeTerm (case𝟘̇ term₁) (ṡuc term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case𝟘̇ term₁) (μ̇ term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (prim m) = ⊥
+CodeTerm (case𝟘̇ term₁) ẑero = ⊥
+CodeTerm (case𝟘̇ term₁) (ŝuc term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (case𝟘̇ term₂) = CodeTerm term₁ term₂
+CodeTerm (case𝟘̇ term₁) ṫt = ⊥
+CodeTerm (case𝟘̇ term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (i̇nj₁ term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (i̇nj₂ term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case𝟘̇ term₁) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) [̇] = ⊥
+CodeTerm (case𝟘̇ term₁) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (case𝟘̇ term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm ṫt (lookup index₂) = ⊥
+CodeTerm ṫt (term₂₁ · term₂₂) = ⊥
+CodeTerm ṫt (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm ṫt (μ̇ term₂) = ⊥
+CodeTerm ṫt (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm ṫt (case𝟘̇ term₂) = ⊥
+CodeTerm ṫt ṫt = ⊤
+CodeTerm ṫt (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm ṫt (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm ṫt (ṗroj₁ term₂) = ⊥
+CodeTerm ṫt (ṗroj₂ term₂) = ⊥
+CodeTerm ṫt (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm ṫt (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (lookup index₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (λ̇ term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (term₂₁ · term₂₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) żero = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (ṡuc term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (prim m) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) ẑero = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (ŝuc term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) ṫt = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (case𝟙̇ term₂₁ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (i̇nj₁ term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (i̇nj₂ term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) [̇] = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (case𝟙̇ term₁₁ term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (i̇nj₁ term₁) (lookup index₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (i̇nj₁ term₁) (μ̇ term₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (i̇nj₁ term₂) = CodeTerm term₁ term₂
+CodeTerm (i̇nj₁ term₁) (i̇nj₂ term₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (i̇nj₁ term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (i̇nj₁ term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (i̇nj₂ term₁) (lookup index₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (i̇nj₂ term₁) (μ̇ term₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (i̇nj₁ term₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (i̇nj₂ term₂) = CodeTerm term₁ term₂
+CodeTerm (i̇nj₂ term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (i̇nj₂ term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (i̇nj₂ term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (lookup index₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (λ̇ term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (term₂₁ · term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) żero = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (ṡuc term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃₄) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (μ̇ term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (prim m) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) ẑero = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (ŝuc term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (case𝟘̇ term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) ṫt = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (i̇nj₁ term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (i̇nj₂ term₂) = ⊥
+CodeTerm (case+̇ {A = A₁} {B = B₁} term₁₁ term₁₂ term₁₃) (case+̇ {A = A₂} {B = B₂} term₂₁ term₂₂ term₂₃) = Σ (A₁ ≡ A₂) λ { refl → Σ (B₁ ≡ B₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃ } }
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (ṗroj₁ term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (ṗroj₂ term₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) [̇] = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (lookup index₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (term₂₁ · term₂₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (term₂₁ ,̇ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+CodeTerm (term₁₁ ,̇ term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ ,̇ term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṗroj₁ term₁) (lookup index₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (λ̇ term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (ṗroj₁ term₁) żero = ⊥
+CodeTerm (ṗroj₁ term₁) (ṡuc term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṗroj₁ term₁) (μ̇ term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (prim m) = ⊥
+CodeTerm (ṗroj₁ term₁) ẑero = ⊥
+CodeTerm (ṗroj₁ term₁) (ŝuc term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) ṫt = ⊥
+CodeTerm (ṗroj₁ term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (i̇nj₁ term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (i̇nj₂ term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṗroj₁ term₁) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (ṗroj₁ {B = B₁} term₁) (ṗroj₁ {B = B₂} term₂) = Σ (B₁ ≡ B₂) λ { refl → CodeTerm term₁ term₂ }
+CodeTerm (ṗroj₁ term₁) (ṗroj₂ term₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ṗroj₁ term₁) [̇] = ⊥
+CodeTerm (ṗroj₁ term₁) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (ṗroj₁ term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṗroj₂ term₁) (lookup index₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (λ̇ term₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (term₂₁ · term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) żero = ⊥
+CodeTerm (ṗroj₂ term₁) (ṡuc term₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṗroj₂ term₁) (μ̇ term₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (prim m) = ⊥
+CodeTerm (ṗroj₂ term₁) ẑero = ⊥
+CodeTerm (ṗroj₂ term₁) (ŝuc term₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (case𝟘̇ term₂) = ⊥
+CodeTerm (ṗroj₂ term₁) ṫt = ⊥
+CodeTerm (ṗroj₂ term₁) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (i̇nj₁ term₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (i̇nj₂ term₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (ṗroj₂ term₁) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (ṗroj₁ term₂) = ⊥
+CodeTerm (ṗroj₂ {A = A₁} term₁) (ṗroj₂ {A = A₂} term₂) = Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁ term₂ }
+CodeTerm (ṗroj₂ term₁) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) [̇] = ⊥
+CodeTerm (ṗroj₂ term₁) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (ṗroj₂ term₁) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (lookup index₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (λ̇ term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (term₂₁ · term₂₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) żero = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (ṡuc term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (prim m) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) ẑero = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (ŝuc term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) ṫt = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (i̇nj₁ term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (i̇nj₂ term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (case×̇ {A = A₁} {B = B₁} term₁₁ term₁₂) (case×̇ {A = A₂} {B = B₂} term₂₁ term₂₂) = Σ (A₁ ≡ A₂) λ { refl → Σ (B₁ ≡ B₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ } }
+CodeTerm (case×̇ term₁₁ term₁₂) [̇] = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (case×̇ term₁₁ term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm [̇] (lookup index₂) = ⊥
+CodeTerm [̇] (term₂₁ · term₂₂) = ⊥
+CodeTerm [̇] (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm [̇] (μ̇ term₂) = ⊥
+CodeTerm [̇] (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm [̇] (case𝟘̇ term₂) = ⊥
+CodeTerm [̇] (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm [̇] (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm [̇] (ṗroj₁ term₂) = ⊥
+CodeTerm [̇] (ṗroj₂ term₂) = ⊥
+CodeTerm [̇] (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm [̇] [̇] = ⊤
+CodeTerm [̇] (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm [̇] (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (lookup index₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (term₂₁ · term₂₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (μ̇ term₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (case𝟘̇ term₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (ṗroj₁ term₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (ṗroj₂ term₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) [̇] = ⊥
+CodeTerm (term₁₁ ∷̇ term₁₂) (term₂₁ ∷̇ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+CodeTerm (term₁₁ ∷̇ term₁₂) (caseL̇ist term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (lookup index₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (λ̇ term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (term₂₁ · term₂₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) żero = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (ṡuc term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (μ̇ term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (l̇et term₂₁ term₂₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (prim m) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) ẑero = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (ŝuc term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (term₂₁ +̂ term₂₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (term₂₁ *̂ term₂₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (case𝟘̇ term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) ṫt = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (case𝟙̇ term₂₁ term₂₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (i̇nj₁ term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (i̇nj₂ term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (case+̇ term₂₁ term₂₂ term₂₃) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (term₂₁ ,̇ term₂₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (ṗroj₁ term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (ṗroj₂ term₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (case×̇ term₂₁ term₂₂) = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) [̇] = ⊥
+CodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (term₂₁ ∷̇ term₂₂) = ⊥
+CodeTerm (caseL̇ist {A = A₁} term₁₁ term₁₂ term₁₃) (caseL̇ist {A = A₂} term₂₁ term₂₂ term₂₃) = Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃ }
+
+-- CodeTerm : {Γ : Context} → {A : Type} → (term₁ term₂ : Γ ⊢ A) → Set
+-- CodeTerm (lookup index₁) (lookup index₂) = index₁ ≡ index₂
+-- CodeTerm (λ̇ term₁) (λ̇ term₂) = CodeTerm term₁ term₂
+-- CodeTerm (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) = Σ (A₁ ≡ A₂) (λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ })
+-- CodeTerm żero żero = ⊤
+-- CodeTerm (ṡuc term₁) (ṡuc term₂) = CodeTerm term₁ term₂
+-- CodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃
+-- CodeTerm (μ̇ term₁) (μ̇ term₂) = CodeTerm term₁ term₂
+-- CodeTerm (l̇et {A = A₁} term₁₁ term₁₂) (l̇et {A = A₂} term₂₁ term₂₂) = Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ }
+-- CodeTerm (prim n) (prim m) = n ≡ m
+-- CodeTerm ẑero ẑero = ⊤
+-- CodeTerm (ŝuc term₁) (ŝuc term₂) = CodeTerm term₁ term₂
+-- CodeTerm (term₁₁ +̂ term₁₂) (term₂₁ +̂ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+-- CodeTerm (term₁₁ *̂ term₁₂) (term₂₁ *̂ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+-- CodeTerm (case𝟘̇ term₁) (case𝟘̇ term₂) = CodeTerm term₁ term₂
+-- CodeTerm ṫt ṫt = ⊤
+-- CodeTerm (case𝟙̇ term₁₁ term₁₂) (case𝟙̇ term₂₁ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+-- CodeTerm (i̇nj₁ term₁) (i̇nj₁ term₂) = CodeTerm term₁ term₂
+-- CodeTerm (i̇nj₂ term₁) (i̇nj₂ term₂) = CodeTerm term₁ term₂
+-- CodeTerm (case+̇ {A = A₁} {B = B₁} term₁₁ term₁₂ term₁₃) (case+̇ {A = A₂} {B = B₂} term₂₁ term₂₂ term₂₃) = Σ (A₁ ≡ A₂) λ { refl → Σ (B₁ ≡ B₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃ } }
+-- CodeTerm (term₁₁ ,̇ term₁₂) (term₂₁ ,̇ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+-- CodeTerm (ṗroj₁ {B = B₁} term₁) (ṗroj₁ {B = B₂} term₂) = Σ (B₁ ≡ B₂) λ { refl → CodeTerm term₁ term₂ }
+-- CodeTerm (ṗroj₂ {A = A₁} term₁) (ṗroj₂ {A = A₂} term₂) = Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁ term₂ }
+-- CodeTerm (case×̇ {A = A₁} {B = B₁} term₁₁ term₁₂) (case×̇ {A = A₂} {B = B₂} term₂₁ term₂₂) = Σ (A₁ ≡ A₂) λ { refl → Σ (B₁ ≡ B₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ } }
+-- CodeTerm [̇] [̇] = ⊤
+-- CodeTerm (term₁₁ ∷̇ term₁₂) (term₂₁ ∷̇ term₂₂) = CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂
+-- CodeTerm (caseL̇ist {A = A₁} term₁₁ term₁₂ term₁₃) (caseL̇ist {A = A₂} term₂₁ term₂₂ term₂₃) = Σ (A₁ ≡ A₂) λ { refl → CodeTerm term₁₁ term₂₁ × CodeTerm term₁₂ term₂₂ × CodeTerm term₁₃ term₂₃ }
+-- CodeTerm _ _ = ⊥
+
+rTerm : {Γ : Context} → {A : Type} → (term : Γ ⊢ A) → CodeTerm term term
+rTerm (lookup index) = refl
+rTerm (λ̇ term) = rTerm term
+rTerm (term₁ · term₂) = refl , rTerm term₁ , rTerm term₂
+rTerm żero = tt
+rTerm (ṡuc term) = rTerm term
+rTerm (caseℕ̇ term₁ term₂ term₃) = rTerm term₁ , rTerm term₂ , rTerm term₃
+rTerm (μ̇ term) = rTerm term
+rTerm (l̇et term₁ term₂) = refl , rTerm term₁ , rTerm term₂
+rTerm (prim n) = refl
+rTerm ẑero = tt
+rTerm (ŝuc term) = rTerm term
+rTerm (term₁ +̂ term₂) = rTerm term₁ , rTerm term₂
+rTerm (term₁ *̂ term₂) = rTerm term₁ , rTerm term₂
+rTerm (case𝟘̇ term) = rTerm term
+rTerm ṫt = tt
+rTerm (case𝟙̇ term₁ term₂) = rTerm term₁ , rTerm term₂
+rTerm (i̇nj₁ term) = rTerm term
+rTerm (i̇nj₂ term) = rTerm term
+rTerm (case+̇ term₁ term₂ term₃) = refl , refl , rTerm term₁ , rTerm term₂ , rTerm term₃
+rTerm (term₁ ,̇ term₂) = rTerm term₁ , rTerm term₂
+rTerm (ṗroj₁ term) = refl , rTerm term
+rTerm (ṗroj₂ term) = refl , rTerm term
+rTerm (case×̇ term₁ term₂) = refl , refl , rTerm term₁ , rTerm term₂
+rTerm [̇] = tt
+rTerm (term₁ ∷̇ term₂) = rTerm term₁ , rTerm term₂
+rTerm (caseL̇ist term₁ term₂ term₃) = refl , rTerm term₁ , rTerm term₂ , rTerm term₃
+
+Term-eq≅CodeTerm : {Γ : Context} → {A : Type}
+    → (term₁ term₂ : Γ ⊢ A)
+    → term₁ ≡ term₂ ≅ CodeTerm term₁ term₂
+Term-eq≅CodeTerm term₁ term₂ = record {
+        to = encodeTerm term₁ term₂;
+        from = decodeTerm term₁ term₂;
+        from∘to = decodeTerm-encodeTerm term₁ term₂;
+        to∘from = encodeTerm-decodeTerm term₁ term₂
+    } where
+        encodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → term₁ ≡ term₂ → CodeTerm term₁ term₂
+        encodeTerm term₁ .term₁ refl = rTerm term₁
+
+        decodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → CodeTerm term₁ term₂ → term₁ ≡ term₂
+        decodeTerm (lookup index₁) (lookup .index₁) refl = refl
+        decodeTerm (λ̇ term₁) (λ̇ term₂) code = cong λ̇_ (decodeTerm term₁ term₂ code)
+        decodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂) (refl , code₁ , code₂) = cong₂ _·_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm żero żero tt = refl
+        decodeTerm (ṡuc term₁) (ṡuc term₂) code = cong ṡuc_ (decodeTerm term₁ term₂ code)
+        decodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (code₁ , code₂ , code₃) = cong₃ caseℕ̇ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃)
+        decodeTerm (μ̇ term₁) (μ̇ term₂) code = cong μ̇_ (decodeTerm term₁ term₂ code)
+        decodeTerm (l̇et term₁₁ term₁₂) (l̇et term₂₁ term₂₂) (refl , code₁ , code₂) = cong₂ l̇et (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm (prim n) (prim .n) refl = refl
+        decodeTerm ẑero ẑero tt = refl
+        decodeTerm (ŝuc term₁) (ŝuc term₂) code = cong ŝuc_ (decodeTerm term₁ term₂ code)
+        decodeTerm (term₁₁ +̂ term₁₂) (term₂₁ +̂ term₂₂) (code₁ , code₂) = cong₂ _+̂_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm (term₁₁ *̂ term₁₂) (term₂₁ *̂ term₂₂) (code₁ , code₂) = cong₂ _*̂_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm (case𝟘̇ term₁) (case𝟘̇ term₂) code = cong case𝟘̇ (decodeTerm term₁ term₂ code)
+        decodeTerm ṫt ṫt tt = refl
+        decodeTerm (case𝟙̇ term₁₁ term₁₂) (case𝟙̇ term₂₁ term₂₂) (code₁ , code₂) = cong₂ case𝟙̇ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm (i̇nj₁ term₁) (i̇nj₁ term₂) code = cong i̇nj₁ (decodeTerm term₁ term₂ code)
+        decodeTerm (i̇nj₂ term₁) (i̇nj₂ term₂) code = cong i̇nj₂ (decodeTerm term₁ term₂ code)
+        decodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (case+̇ term₂₁ term₂₂ term₂₃) (refl , refl , code₁ , code₂ , code₃) = cong₃ case+̇ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃)
+        decodeTerm (term₁₁ ,̇ term₁₂) (term₂₁ ,̇ term₂₂) (code₁ , code₂) = cong₂ _,̇_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm (ṗroj₁ term₁) (ṗroj₁ term₂) (refl , code) = cong ṗroj₁ (decodeTerm term₁ term₂ code)
+        decodeTerm (ṗroj₂ term₁) (ṗroj₂ term₂) (refl , code) = cong ṗroj₂ (decodeTerm term₁ term₂ code)
+        decodeTerm (case×̇ term₁₁ term₁₂) (case×̇ term₂₁ term₂₂) (refl , refl , code₁ , code₂) = cong₂ case×̇ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm [̇] [̇] tt = refl
+        decodeTerm (term₁₁ ∷̇ term₁₂) (term₂₁ ∷̇ term₂₂) (code₁ , code₂) = cong₂ _∷̇_ (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂)
+        decodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (caseL̇ist term₂₁ term₂₂ term₂₃) (refl , code₁ , code₂ , code₃) = cong₃ caseL̇ist (decodeTerm term₁₁ term₂₁ code₁) (decodeTerm term₁₂ term₂₂ code₂) (decodeTerm term₁₃ term₂₃ code₃)
+
+        decodeTerm-encodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → (p : term₁ ≡ term₂) → decodeTerm term₁ term₂ (encodeTerm term₁ term₂ p) ≡ p
+        decodeTerm-encodeTerm (lookup index₁) .(lookup index₁) refl = refl
+        decodeTerm-encodeTerm (λ̇ term₁) .(λ̇ term₁) refl = cong (cong λ̇_) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (term₁₁ · term₁₂) .(term₁₁ · term₁₂) refl = cong₂ (cong₂ _·_) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm żero .żero refl = refl
+        decodeTerm-encodeTerm (ṡuc term₁) .(ṡuc term₁) refl = cong (cong ṡuc_) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) .(caseℕ̇ term₁₁ term₁₂ term₁₃) refl = cong₃ (cong₃ caseℕ̇) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl) (decodeTerm-encodeTerm term₁₃ term₁₃ refl)
+        decodeTerm-encodeTerm (μ̇ term₁) .(μ̇ term₁) refl = cong (cong μ̇_) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (l̇et term₁₁ term₁₂) .(l̇et term₁₁ term₁₂) refl = cong₂ (cong₂ l̇et) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm (prim n) .(prim n) refl = refl
+        decodeTerm-encodeTerm ẑero .ẑero refl = refl
+        decodeTerm-encodeTerm (ŝuc term₁) .(ŝuc term₁) refl = cong (cong ŝuc_) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (term₁₁ +̂ term₁₂) .(term₁₁ +̂ term₁₂) refl = cong₂ (cong₂ _+̂_) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm (term₁₁ *̂ term₁₂) .(term₁₁ *̂ term₁₂) refl = cong₂ (cong₂ _*̂_) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm (case𝟘̇ term₁) .(case𝟘̇ term₁) refl = cong (cong case𝟘̇) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm ṫt .ṫt refl = refl
+        decodeTerm-encodeTerm (case𝟙̇ term₁₁ term₁₂) .(case𝟙̇ term₁₁ term₁₂) refl = cong₂ (cong₂ case𝟙̇) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm (i̇nj₁ term₁) .(i̇nj₁ term₁) refl = cong (cong i̇nj₁) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (i̇nj₂ term₁) .(i̇nj₂ term₁) refl = cong (cong i̇nj₂) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (case+̇ term₁₁ term₁₂ term₁₃) .(case+̇ term₁₁ term₁₂ term₁₃) refl = cong₃ (cong₃ case+̇) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl) (decodeTerm-encodeTerm term₁₃ term₁₃ refl)
+        decodeTerm-encodeTerm (term₁₁ ,̇ term₁₂) .(term₁₁ ,̇ term₁₂) refl = cong₂ (cong₂ _,̇_) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm (ṗroj₁ term₁) .(ṗroj₁ term₁) refl = cong (cong ṗroj₁) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (ṗroj₂ term₁) .(ṗroj₂ term₁) refl = cong (cong ṗroj₂) (decodeTerm-encodeTerm term₁ term₁ refl)
+        decodeTerm-encodeTerm (case×̇ term₁₁ term₁₂) .(case×̇ term₁₁ term₁₂) refl = cong₂ (cong₂ case×̇) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm [̇] .[̇] refl = refl
+        decodeTerm-encodeTerm (term₁₁ ∷̇ term₁₂) .(term₁₁ ∷̇ term₁₂) refl = cong₂ (cong₂ _∷̇_) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl)
+        decodeTerm-encodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) .(caseL̇ist term₁₁ term₁₂ term₁₃) refl = cong₃ (cong₃ caseL̇ist) (decodeTerm-encodeTerm term₁₁ term₁₁ refl) (decodeTerm-encodeTerm term₁₂ term₁₂ refl) (decodeTerm-encodeTerm term₁₃ term₁₃ refl)
+
+        encodeTerm-decodeTerm : {Γ : Context} → {A : Type}
+            → (term₁ term₂ : Γ ⊢ A)
+            → (code : CodeTerm term₁ term₂) → encodeTerm term₁ term₂ (decodeTerm term₁ term₂ code) ≡ code
+        encodeTerm-decodeTerm (lookup index₁) (lookup .index₁) refl = refl
+        encodeTerm-decodeTerm (λ̇ term₁) (λ̇ term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (term₁₁ · term₁₂) (term₂₁ · term₂₂) (refl , code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm żero żero tt = refl
+        encodeTerm-decodeTerm (ṡuc term₁) (ṡuc term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) (code₁ , code₂ , code₃)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                decodeTerm term₁₃ term₂₃ code₃ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₃ term₂₃ code₃
+        ... | refl | refl | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (μ̇ term₁) (μ̇ term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (l̇et term₁₁ term₁₂) (l̇et term₂₁ term₂₂) (refl , code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (prim n) (prim .n) refl = refl
+        encodeTerm-decodeTerm ẑero ẑero tt = refl
+        encodeTerm-decodeTerm (ŝuc term₁) (ŝuc term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (term₁₁ +̂ term₁₂) (term₂₁ +̂ term₂₂) (code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (term₁₁ *̂ term₁₂) (term₂₁ *̂ term₂₂) (code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (case𝟘̇ term₁) (case𝟘̇ term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm ṫt ṫt tt = refl
+        encodeTerm-decodeTerm (case𝟙̇ term₁₁ term₁₂) (case𝟙̇ term₂₁ term₂₂) (code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (i̇nj₁ term₁) (i̇nj₁ term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (i̇nj₂ term₁) (i̇nj₂ term₂) code with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (case+̇ term₁₁ term₁₂ term₁₃) (case+̇ term₂₁ term₂₂ term₂₃) (refl , refl , code₁ , code₂ , code₃)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                decodeTerm term₁₃ term₂₃ code₃ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₃ term₂₃ code₃
+        ... | refl | refl | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (term₁₁ ,̇ term₁₂) (term₂₁ ,̇ term₂₂) (code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (ṗroj₁ term₁) (ṗroj₁ term₂) (refl , code) with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (ṗroj₂ term₁) (ṗroj₂ term₂) (refl , code) with decodeTerm term₁ term₂ code | encodeTerm-decodeTerm term₁ term₂ code
+        ... | refl | refl = refl
+        encodeTerm-decodeTerm (case×̇ term₁₁ term₁₂) (case×̇ term₂₁ term₂₂) (refl , refl , code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm [̇] [̇] tt = refl
+        encodeTerm-decodeTerm (term₁₁ ∷̇ term₁₂) (term₂₁ ∷̇ term₂₂) (code₁ , code₂)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂
+        ... | refl | refl | refl | refl = refl
+        encodeTerm-decodeTerm (caseL̇ist term₁₁ term₁₂ term₁₃) (caseL̇ist term₂₁ term₂₂ term₂₃) (refl , code₁ , code₂ , code₃)
+            with
+                decodeTerm term₁₁ term₂₁ code₁ |
+                decodeTerm term₁₂ term₂₂ code₂ |
+                decodeTerm term₁₃ term₂₃ code₃ |
+                encodeTerm-decodeTerm term₁₁ term₂₁ code₁ |
+                encodeTerm-decodeTerm term₁₂ term₂₂ code₂ |
+                encodeTerm-decodeTerm term₁₃ term₂₃ code₃
+        ... | refl | refl | refl | refl | refl | refl = refl
+
+CodeTerm-Is-hProp : {Γ : Context} → {A : Type}
+    → (term₁ term₂ : Γ ⊢ A)
+    → Is-hProp (CodeTerm term₁ term₂)
+CodeTerm-Is-hProp (lookup index₁) (lookup index₂) = Index-Is-hSet index₁ index₂
+CodeTerm-Is-hProp (λ̇ term₁) (λ̇ term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (_·_ {A = A₁} term₁₁ term₁₂) (_·_ {A = A₂} term₂₁ term₂₂) = Σ-Is-hProp (Type-Is-hSet A₁ A₂) λ { refl → ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂) }
+CodeTerm-Is-hProp żero żero = ⊤-Is-hProp
+CodeTerm-Is-hProp (ṡuc term₁) (ṡuc term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (caseℕ̇ term₁₁ term₁₂ term₁₃) (caseℕ̇ term₂₁ term₂₂ term₂₃) = ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (×-Is-hProp (CodeTerm-Is-hProp term₁₂ term₂₂) (CodeTerm-Is-hProp term₁₃ term₂₃))
+CodeTerm-Is-hProp (μ̇ term₁) (μ̇ term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (l̇et {A = A₁} term₁₁ term₁₂) (l̇et {A = A₂} term₂₁ term₂₂) = Σ-Is-hProp (Type-Is-hSet A₁ A₂) λ { refl → ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂) }
+CodeTerm-Is-hProp (prim n) (prim m) = ℕ-Is-hSet n m
+CodeTerm-Is-hProp ẑero ẑero = ⊤-Is-hProp
+CodeTerm-Is-hProp (ŝuc term₁) (ŝuc term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (term₁₁ +̂ term₁₂) (term₂₁ +̂ term₂₂) = ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂)
+CodeTerm-Is-hProp (term₁₁ *̂ term₁₂) (term₂₁ *̂ term₂₂) = ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂)
+CodeTerm-Is-hProp (case𝟘̇ term₁) (case𝟘̇ term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp ṫt ṫt = ⊤-Is-hProp
+CodeTerm-Is-hProp (case𝟙̇ term₁₁ term₁₂) (case𝟙̇ term₂₁ term₂₂) = ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂)
+CodeTerm-Is-hProp (i̇nj₁ term₁) (i̇nj₁ term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (i̇nj₂ term₁) (i̇nj₂ term₂) = CodeTerm-Is-hProp term₁ term₂
+CodeTerm-Is-hProp (case+̇ {A = A₁} {B = B₁} term₁₁ term₁₂ term₁₃) (case+̇ {A = A₂} {B = B₂} term₂₁ term₂₂ term₂₃) = Σ-Is-hProp (Type-Is-hSet A₁ A₂) λ { refl → Σ-Is-hProp (Type-Is-hSet B₁ B₂) λ { refl → ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (×-Is-hProp (CodeTerm-Is-hProp term₁₂ term₂₂) (CodeTerm-Is-hProp term₁₃ term₂₃)) } }
+CodeTerm-Is-hProp (term₁₁ ,̇ term₁₂) (term₂₁ ,̇ term₂₂) = ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂)
+CodeTerm-Is-hProp (ṗroj₁ {B = B₁} term₁) (ṗroj₁ {B = B₂} term₂) = Σ-Is-hProp (Type-Is-hSet B₁ B₂) λ { refl → CodeTerm-Is-hProp term₁ term₂ }
+CodeTerm-Is-hProp (ṗroj₂ {A = A₁} term₁) (ṗroj₂ {A = A₂} term₂) = Σ-Is-hProp (Type-Is-hSet A₁ A₂) λ { refl → CodeTerm-Is-hProp term₁ term₂ }
+CodeTerm-Is-hProp (case×̇ {A = A₁} {B = B₁} term₁₁ term₁₂) (case×̇ {A = A₂} {B = B₂} term₂₁ term₂₂) = Σ-Is-hProp (Type-Is-hSet A₁ A₂) λ { refl → Σ-Is-hProp (Type-Is-hSet B₁ B₂) λ { refl → ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂) } }
+CodeTerm-Is-hProp [̇] [̇] = ⊤-Is-hProp
+CodeTerm-Is-hProp (term₁₁ ∷̇ term₁₂) (term₂₁ ∷̇ term₂₂) = ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (CodeTerm-Is-hProp term₁₂ term₂₂)
+CodeTerm-Is-hProp (caseL̇ist {A = A₁} term₁₁ term₁₂ term₁₃) (caseL̇ist {A = A₂} term₂₁ term₂₂ term₂₃) = Σ-Is-hProp (Type-Is-hSet A₁ A₂) λ { refl → ×-Is-hProp (CodeTerm-Is-hProp term₁₁ term₂₁) (×-Is-hProp (CodeTerm-Is-hProp term₁₂ term₂₂) (CodeTerm-Is-hProp term₁₃ term₂₃)) }
+
+Term-Is-hSet : {Γ : Context} → {A : Type} → Is-hSet (Γ ⊢ A)
+Term-Is-hSet term₁ term₂ = ≅-Is-hProp (Term-eq≅CodeTerm term₁ term₂) (CodeTerm-Is-hProp term₁ term₂)

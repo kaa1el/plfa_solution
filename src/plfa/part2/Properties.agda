@@ -2,16 +2,16 @@
 
 module plfa.part2.Properties where
 
-open import Relation.Binary.PropositionalEquality using (_≡_; _≢_; refl; sym; cong; cong₂)
 open import Data.String using (String; _≟_)
 open import Data.Nat using (ℕ; zero; suc)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
 open import Data.Bool using (T; not)
 open import Data.Maybe using (Maybe; nothing; just)
-open import Data.Product using (Σ; _×_; _,_; proj₁; proj₂)
+open import Data.Product using (Σ; _×_; _,_)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Relation.Nullary using (¬_; Dec; yes; no)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; cong; _≢_)
 open import Function using (_∘_)
 
 open import plfa.part1.Isomorphism using (_≅_; _≲_)

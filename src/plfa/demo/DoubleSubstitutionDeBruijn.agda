@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K #-}
 
-module plfa.demo.DeBruijnSubstitution where
+module plfa.demo.DoubleSubstitutionDeBruijn where
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Unit using (⊤; tt)
@@ -19,20 +19,10 @@ open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Relation.Nullary.Decidable using (True; toWitness)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans; cong; cong₂; subst)
 
+open import plfa.part1.Equality using (cong₃)
 open import plfa.part2.DeBruijn
 
 -- useful congruences
-
-cong₃ : {A B C D : Set}
-    → (f : A → B → C → D)
-    → {x₁ x₂ : A}
-    → {y₁ y₂ : B}
-    → {z₁ z₂ : C}
-    → x₁ ≡ x₂
-    → y₁ ≡ y₂
-    → z₁ ≡ z₂
-    → f x₁ y₁ z₁ ≡ f x₂ y₂ z₂
-cong₃ f refl refl refl = refl
 
 cong-extend : {Γ Δ : Context}
     → {σ₁ σ₂ : {A : Type} → Γ ∋ A → Δ ⊢ A}
@@ -54,6 +44,20 @@ cong-substitute p żero = refl
 cong-substitute p (ṡuc term) = cong ṡuc_ (cong-substitute p term)
 cong-substitute p (caseℕ̇ term₁ term₂ term₃) = cong₃ caseℕ̇ (cong-substitute p term₁) (cong-substitute p term₂) (cong-substitute (cong-extend p) term₃)
 cong-substitute p (μ̇ term) = cong μ̇_ (cong-substitute (cong-extend p) term)
+
+-- repeated extend-reindex (extends-reindex) and repeated extend (extends)
+
+extends-reindex : {Γ Δ : Context}
+    → ({A : Type} → Γ ∋ A → Δ ∋ A)
+    → ({A : Type} → {Ε : Context} → Γ ‚‚ Ε ∋ A → Δ ‚‚ Ε ∋ A)
+extends-reindex ρ {Ε = []} = ρ
+extends-reindex ρ {Ε = Ε ‚ B} = extend-reindex (extends-reindex ρ)
+
+extends : {Γ Δ : Context}
+    → ({A : Type} → Γ ∋ A → Δ ⊢ A)
+    → ({A : Type} → {Ε : Context} → Γ ‚‚ Ε ∋ A → Δ ‚‚ Ε ⊢ A)
+extends σ {Ε = []} = σ
+extends σ {Ε = Ε ‚ B} = extend (extends σ)
 
 -- lemma 1: substitute-shift
 
@@ -104,19 +108,6 @@ substitute-shift : {Γ : Context} → {A B : Type}
 substitute-shift term₁ term₂ = trans (substitute-compose term₁) (substitute-lookup term₁)
 
 -- lemma 2: substitute-substitute-compose
--- uses repeated extend-reindex and extend
-
-extends-reindex : {Γ Δ : Context}
-    → ({A : Type} → Γ ∋ A → Δ ∋ A)
-    → ({A : Type} → {Ε : Context} → Γ ‚‚ Ε ∋ A → Δ ‚‚ Ε ∋ A)
-extends-reindex ρ {Ε = []} = ρ
-extends-reindex ρ {Ε = Ε ‚ B} = extend-reindex (extends-reindex ρ)
-
-extends : {Γ Δ : Context}
-    → ({A : Type} → Γ ∋ A → Δ ⊢ A)
-    → ({A : Type} → {Ε : Context} → Γ ‚‚ Ε ∋ A → Δ ‚‚ Ε ⊢ A)
-extends σ {Ε = []} = σ
-extends σ {Ε = Ε ‚ B} = extend (extends σ)
 
 insert-twice-index : {Γ Δ Ε : Context}
     → {A B C : Type}
@@ -135,7 +126,7 @@ insert-twice {Ε = Ε} {A = A₁ →̇ A₂} (λ̇ term) = cong λ̇_ (insert-tw
 insert-twice (term₁ · term₂) = cong₂ _·_ (insert-twice term₁) (insert-twice term₂)
 insert-twice żero = refl
 insert-twice (ṡuc term) = cong ṡuc_ (insert-twice term)
-insert-twice {Ε = Ε} {A = A} (caseℕ̇ term₁ term₂ term₃) = cong₃ caseℕ̇ (insert-twice term₁) (insert-twice term₂) (insert-twice {Ε = Ε ‚ ℕ̇} term₃)
+insert-twice {Ε = Ε} (caseℕ̇ term₁ term₂ term₃) = cong₃ caseℕ̇ (insert-twice term₁) (insert-twice term₂) (insert-twice {Ε = Ε ‚ ℕ̇} term₃)
 insert-twice {Ε = Ε} {A = A} (μ̇ term) = cong μ̇_ (insert-twice {Ε = Ε ‚ A} term)
 
 insert-substitute-index : {Γ Δ Ε : Context}
@@ -153,11 +144,11 @@ insert-substitute : {Γ Δ Ε : Context}
     → (term : Γ ‚‚ Ε ⊢ A)
     → substitute (extends (extend σ {B = B}) {Ε = Ε}) (reindex-to-rebase (extends-reindex there) term) ≡ reindex-to-rebase (extends-reindex there) (substitute (extends σ) term) -- Δ ‚ B ‚‚ Ε ⊢ A
 insert-substitute (lookup index) = insert-substitute-index index
-insert-substitute {Ε = Ε} {A = A₁ →̇ A₂} {B} {σ} (λ̇ term) = cong λ̇_ (insert-substitute {Ε = Ε ‚ A₁} term)
+insert-substitute {Ε = Ε} {A = A₁ →̇ A₂} (λ̇ term) = cong λ̇_ (insert-substitute {Ε = Ε ‚ A₁} term)
 insert-substitute (term₁ · term₂) = cong₂ _·_ (insert-substitute term₁) (insert-substitute term₂)
 insert-substitute żero = refl
 insert-substitute (ṡuc term) = cong ṡuc_ (insert-substitute term)
-insert-substitute {Ε = Ε} {A = A} (caseℕ̇ term₁ term₂ term₃) = cong₃ caseℕ̇ (insert-substitute term₁) (insert-substitute term₂) (insert-substitute {Ε = Ε ‚ ℕ̇} term₃)
+insert-substitute {Ε = Ε} (caseℕ̇ term₁ term₂ term₃) = cong₃ caseℕ̇ (insert-substitute term₁) (insert-substitute term₂) (insert-substitute {Ε = Ε ‚ ℕ̇} term₃)
 insert-substitute {Ε = Ε} {A = A} (μ̇ term) = cong μ̇_ (insert-substitute {Ε = Ε ‚ A} term)
 
 shift-substitute : {Γ Δ : Context}
@@ -171,10 +162,10 @@ extend-substitute-compose : {Γ Δ Ε : Context}
     → {σ₁ : {A : Type} → Γ ∋ A → Δ ⊢ A}
     → {σ₂ : {A : Type} → Δ ∋ A → Ε ⊢ A}
     → {A B : Type}
-    → (index : Γ ‚ A ∋ B)
+    → (index : Γ ‚ B ∋ A)
     → ((substitute (extend σ₂)) ∘ extend σ₁) index ≡ extend ((substitute σ₂) ∘ σ₁) index
 extend-substitute-compose here = refl
-extend-substitute-compose {σ₁ = σ₁} {σ₂ = σ₂} (there index) = shift-substitute (σ₁ index)
+extend-substitute-compose {σ₁ = σ₁} (there index) = shift-substitute (σ₁ index)
 
 substitute-substitute-compose : {Γ Δ Ε : Context}
     → {σ₁ : {A : Type} → Γ ∋ A → Δ ⊢ A}
@@ -192,54 +183,35 @@ substitute-substitute-compose (μ̇ term) = cong μ̇_ (trans (substitute-substi
 
 -- lemma 3: equalities regarding σ₁ and σ₂
 
-extend-σ₁-there : {Γ : Context} → {A B C : Type}
-    → (term : Γ ⊢ A)
-    → (index : Γ ‚ B ∋ C)
-    → extend (σ₁ term ∘ there) index ≡ (σ₁ (shift term) ∘ there) index
-extend-σ₁-there term here = refl
-extend-σ₁-there term (there index) = refl
-
-substitute-σ₁-there : {Γ : Context} → {A B : Type}
-    → (term₁ : Γ ⊢ A)
-    → (term₂ : Γ ⊢ B)
-    → substitute (σ₁ term₂ ∘ there) term₁ ≡ term₁
-substitute-σ₁-there (lookup index) term₂ = refl
-substitute-σ₁-there {Γ} {A₁ →̇ A₂} {B} (λ̇ term₁) term₂ = cong λ̇_ (trans (cong-substitute (extend-σ₁-there term₂) term₁) (substitute-σ₁-there {Γ ‚ A₁} term₁ (shift term₂)))
-substitute-σ₁-there (term₁₁ · term₁₂) term₂ = cong₂ _·_ (substitute-σ₁-there term₁₁ term₂) (substitute-σ₁-there term₁₂ term₂)
-substitute-σ₁-there żero term₂ = refl
-substitute-σ₁-there (ṡuc term₁) term₂ = cong ṡuc_ (substitute-σ₁-there term₁ term₂)
-substitute-σ₁-there {Γ} (caseℕ̇ term₁₁ term₁₂ term₁₃) term₂ = cong₃ caseℕ̇ (substitute-σ₁-there term₁₁ term₂) (substitute-σ₁-there term₁₂ term₂) (trans (cong-substitute (extend-σ₁-there term₂) term₁₃) (substitute-σ₁-there {Γ ‚ ℕ̇} term₁₃ (shift term₂)))
-substitute-σ₁-there {Γ} {A} {B} (μ̇ term₁) term₂ = cong μ̇_ (trans (cong-substitute (extend-σ₁-there term₂) term₁) (substitute-σ₁-there {Γ ‚ A} term₁ (shift term₂)))
-
 extend-σ₂ : {Γ : Context} → {A B C D : Type}
     → (term₁ : Γ ⊢ A)
     → (term₂ : Γ ⊢ B)
-    → (index : Γ ‚ A ‚ B ‚ C ∋ D)
+    → (index : Γ ‚ A ‚ B ‚ D ∋ C)
     → (substitute (extend (σ₁ term₁)) ∘ extend (σ₁ (shift term₂))) index ≡ extend (σ₂ term₁ term₂) index
 extend-σ₂ term₁ term₂ here = refl
 extend-σ₂ term₁ term₂ (there here) =
     trans
         ((extend-substitute-compose {σ₁ = σ₁ (shift term₂)} {σ₂ = σ₁ term₁} (there here)))
-        (cong shift (trans
-            (substitute-compose term₂)
-            (substitute-σ₁-there term₂ term₁)))
+        (cong shift (substitute-shift term₂ term₁))
 extend-σ₂ term₁ term₂ (there (there here)) =
     trans
         ((extend-substitute-compose {σ₁ = σ₁ (shift term₂)} {σ₂ = σ₁ term₁} (there (there here))))
         (cong shift refl)
 extend-σ₂ term₁ term₂ (there (there (there index))) = refl
 
+-- double substitution
+
 double-substitute : {Γ : Context} → {A B C : Type}
     → (term₁ : Γ ‚ A ‚ B ⊢ C)
     → (term₂ : Γ ⊢ A)
     → (term₃ : Γ ⊢ B)
-    → term₁ [ term₂ ][ term₃ ] ≡ term₁ [ shift term₃ ] [ term₂ ]
-double-substitute (lookup here) term₂ term₃ = sym (substitute-shift term₃ term₂)
+    → term₁ [ shift term₃ ] [ term₂ ] ≡ term₁ [ term₂ ][ term₃ ]
+double-substitute (lookup here) term₂ term₃ = substitute-shift term₃ term₂
 double-substitute (lookup (there here)) term₂ term₃ = refl
 double-substitute (lookup (there (there index₁))) term₂ term₃ = refl
-double-substitute (λ̇ term₁) term₂ term₃ = cong λ̇_ (sym (trans (substitute-substitute-compose term₁) (cong-substitute (extend-σ₂ term₂ term₃) term₁)))
+double-substitute (λ̇ term₁) term₂ term₃ = cong λ̇_ (trans (substitute-substitute-compose term₁) (cong-substitute (extend-σ₂ term₂ term₃) term₁))
 double-substitute (term₁₁ · term₁₂) term₂ term₃ = cong₂ _·_ (double-substitute term₁₁ term₂ term₃) (double-substitute term₁₂ term₂ term₃)
 double-substitute żero term₂ term₃ = refl
 double-substitute (ṡuc term₁) term₂ term₃ = cong ṡuc_ (double-substitute term₁ term₂ term₃)
-double-substitute (caseℕ̇ term₁₁ term₁₂ term₁₃) term₂ term₃ = cong₃ caseℕ̇ (double-substitute term₁₁ term₂ term₃) (double-substitute term₁₂ term₂ term₃) (sym (trans (substitute-substitute-compose term₁₃) (cong-substitute (extend-σ₂ term₂ term₃) term₁₃)))
-double-substitute (μ̇ term₁) term₂ term₃ = cong μ̇_ (sym (trans (substitute-substitute-compose term₁) (cong-substitute (extend-σ₂ term₂ term₃) term₁)))
+double-substitute (caseℕ̇ term₁₁ term₁₂ term₁₃) term₂ term₃ = cong₃ caseℕ̇ (double-substitute term₁₁ term₂ term₃) (double-substitute term₁₂ term₂ term₃) (trans (substitute-substitute-compose term₁₃) (cong-substitute (extend-σ₂ term₂ term₃) term₁₃))
+double-substitute (μ̇ term₁) term₂ term₃ = cong μ̇_ (trans (substitute-substitute-compose term₁) (cong-substitute (extend-σ₂ term₂ term₃) term₁))

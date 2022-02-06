@@ -260,7 +260,7 @@ ind-ℕ′-βs {P} pz ps n =
         subst (P ∘ suc ∘ proj₁)
             (lift (proj₂ (r-ℕ xz xs n)) (ind-ℕ′-1-β pz ps n))
             (uncurry ps (r-ℕ xz xs n))
-    ≡⟨ congd (uncurry ps) (lift (proj₂ (r-ℕ xz xs n)) (ind-ℕ′-1-β pz ps n)) ⟩
+    ≡⟨ cong-d (uncurry ps) (lift (proj₂ (r-ℕ xz xs n)) (ind-ℕ′-1-β pz ps n)) ⟩
         uncurry ps (n , subst P (ind-ℕ′-1-β pz ps n) (proj₂ (r-ℕ xz xs n)))
     ≡⟨⟩
         ps n (subst P (ind-ℕ′-1-β pz ps n) (proj₂ (r-ℕ xz xs n)))
