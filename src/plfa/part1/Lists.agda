@@ -1037,7 +1037,7 @@ Tree-Is-hSet is-hSet tree₁ tree₂ = ≅-Is-hProp (Tree-eq≅CodeTree tree₁ 
 
 -- data Vec (A : Set i) : ℕ → Set i where
 --     [] : Vec A zero
---     _∷_ : {k : ℕ} → (x : A) → (xs : Vec A k) → Vec A (suc n)
+--     _∷_ : {k : ℕ} → (x : A) → (xs : Vec A k) → Vec A (suc k)
 
 CodeVec : {A : Set i} → {k : ℕ} → Vec A k → Vec A k → Set i
 CodeVec [] [] = Unit
@@ -1136,7 +1136,7 @@ Vec≅ListWithLength = record {
 
 -- data Fin : ℕ → Set where
 --     zero : {k : ℕ} → Fin (suc k)
---     suc : {k : ℕ} → Fin n → Fin (suc k)
+--     suc : {k : ℕ} → Fin k → Fin (suc k)
 
 -- Vector : Set i → ℕ → Set i
 -- Vector A k = Fin k → A

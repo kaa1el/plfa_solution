@@ -1,13 +1,15 @@
+{-# OPTIONS --without-K #-}
+
 module plfa.demo.RecursionLite where
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
-open Eq.≡-Reasoning
 open import Data.Nat using (ℕ; zero; suc)
-open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_)
+open import Data.Product using (Σ; _,_; proj₁; proj₂; _×_; uncurry)
 open import Function using (id; _∘_)
+open import Relation.Binary.PropositionalEquality using (_≡_; refl; trans; sym; cong; cong₂; subst)
+open Relation.Binary.PropositionalEquality.≡-Reasoning
 
-open import plfa.demo.HoTT
+open import plfa.part1.Equality using (trans-identity-l; trans-identity-r; trans-sym-l; trans-sym-r; trans-assoc; trans-cong; sym-cong; sym-trans; cong-d; subst-cong; subst-trans)
+open import plfa.demo.EckmannHilton using (lift; lift-proj₁)
 
 ind-ℕ : {P : ℕ → Set} -- standard induction
     → (P zero)

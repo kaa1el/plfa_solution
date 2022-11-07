@@ -2,8 +2,6 @@
 
 module plfa.part2.Bisimulation where
 
-open import Agda.Primitive
-
 open import Data.Bool using (Bool; T; not)
 open import Data.Unit using (⊤; tt)
 open import Data.List using (List; []; _∷_; _++_)
@@ -15,13 +13,11 @@ open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans
 open import plfa.part1.Isomorphism using (_≅_; ≅-sym; _⇔_; Is-hProp; hProp-iso; ≅-Is-hProp)
 open import plfa.part2.More
 
-private
-    variable
-        i j k : Level
-
 -- Simulation
 
 infix 4 _~_
+infix 5 λ̇_
+infixl 7 _·_
 
 data _~_ : {Γ : Context} → {A : Type} → (Γ ⊢ A) → (Γ ⊢ A) → Set where
     lookup : {Γ : Context} → {A : Type}
@@ -264,24 +260,7 @@ simulation-double-substitute {Γ} {A} {B} {C} {term₁₁} {term₂₁} {term₁
 
 open _≅_
 
--- is-simulation : {Γ : Context} → {A : Type}
---     → {term₁ term₂ term₁′ : Γ ⊢ A}
---     → term₁ ~ term₂
---     → term₁ ⟶ term₁′
---     → Σ (Γ ⊢ A) (λ term₂′ → (term₁′ ~ term₂′) × (term₂ ⟶ term₂′))
--- is-simulation {term₂ = (λ̇ term₂₁) · term₂₂} ((λ̇ simulation₁) · simulation₂) (β-λ̇ value₁₂) =
---     term₂₁ [ term₂₂ ] , simulation-single-substitute simulation₁ simulation₂ , β-λ̇ (simulation-value-iso simulation₂ .to value₁₂)
--- is-simulation {term₂ = (λ̇ term₂₂) · term₂₁} (l̇et simulation₁ simulation₂) (β-l̇et value₁₁) =
---     term₂₂ [ term₂₁ ] , simulation-single-substitute simulation₂ simulation₁ , β-λ̇ (simulation-value-iso simulation₁ .to value₁₁)
--- is-simulation (_·_ {term₂′ = term₂₂} (simulation₁₁ · simulation₁₂) simulation₂) (ξ-·₁ reduction₁₁) with is-simulation (simulation₁₁ · simulation₁₂) reduction₁₁
--- ... | term₂₁′ , simulation₁′ , reduction₂₁ = term₂₁′ · term₂₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₂₁
--- is-simulation (_·_ {term₂′ = term₂₂} (l̇et simulation₁₁ simulation₁₂) simulation₂) (ξ-·₁ reduction₁₁) with is-simulation (l̇et simulation₁₁ simulation₁₂) reduction₁₁
--- ... | term₂₁′ , simulation₁′ , reduction₂₁ = term₂₁′ · term₂₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₂₁
--- is-simulation ((λ̇_ {term′ = term₂₁} simulation₁) · simulation₂) (ξ-·₂ value-λ̇ reduction₁₂) with is-simulation simulation₂ reduction₁₂
--- ... | term₂₂′ , simulation₂′ , redunction₂₂ = (λ̇ term₂₁) · term₂₂′ , (λ̇ simulation₁) · simulation₂′ , ξ-·₂ value-λ̇ redunction₂₂
--- is-simulation (l̇et {term₂′ = term₂₂} simulation₁ simulation₂) (ξ-l̇et reduction₁₁) with is-simulation simulation₁ reduction₁₁
--- ... | term₂₁′ , simulation₁′ , redunction₂₁ = (λ̇ term₂₂) · term₂₁′ , l̇et simulation₁′ simulation₂ , ξ-·₂ value-λ̇ redunction₂₁
-
+-- case split on reduction first, then simulation
 is-simulation : {Γ : Context} → {A : Type}
     → {term₁ term₂ term₁′ : Γ ⊢ A}
     → term₁ ~ term₂
@@ -291,7 +270,7 @@ is-simulation
     {term₁ = .((λ̇ term₁₁) · term₁₂)}
     {term₂ = .((λ̇ term₂₁) · term₂₂)}
     {term₁′ = .(term₁₁ [ term₁₂ ])}
-    (_·_ {term₁ = .(λ̇ term₁₁)} {λ̇ term₂₁} {.term₁₂} {term₂₂} (λ̇ simulation₁) simulation₂)
+    (_·_ {term₁ = .(λ̇ term₁₁)} {.(λ̇ term₂₁)} {.term₁₂} {term₂₂} (λ̇_ {term = .term₁₁} {term₂₁} simulation₁) simulation₂)
     (β-λ̇ {term₁ = term₁₁} {term₁₂} value₁₂) =
         term₂₁ [ term₂₂ ] , simulation-single-substitute simulation₁ simulation₂ , β-λ̇ (simulation-value-iso simulation₂ .to value₁₂)
 is-simulation
@@ -334,24 +313,25 @@ is-simulation
         with is-simulation simulation₁ reduction₁₁
 ... | term₂₁′ , simulation₁′ , redunction₂₁ = (λ̇ term₂₂) · term₂₁′ , l̇et simulation₁′ simulation₂ , ξ-·₂ value-λ̇ redunction₂₁
 
--- is-simulation-inv : {Γ : Context} → {A : Type}
---     → {term₁ term₂ term₂′ : Γ ⊢ A}
+-- is-simulation : {Γ : Context} → {A : Type}
+--     → {term₁ term₂ term₁′ : Γ ⊢ A}
 --     → term₁ ~ term₂
---     → term₂ ⟶ term₂′
---     → Σ (Γ ⊢ A) (λ term₁′ → (term₁′ ~ term₂′) × (term₁ ⟶ term₁′))
--- is-simulation-inv {term₁ = (λ̇ term₁₁) · term₁₂} ((λ̇ simulation₁) · simulation₂) (β-λ̇ value₂₂) =
---     term₁₁ [ term₁₂ ] , simulation-single-substitute simulation₁ simulation₂ , β-λ̇ (simulation-value-iso simulation₂ .from value₂₂)
--- is-simulation-inv {term₁ = l̇et term₁₁ term₁₂} (l̇et simulation₁ simulation₂) (β-λ̇ value₂₁) =
---     term₁₂ [ term₁₁ ] , simulation-single-substitute simulation₂ simulation₁ , β-l̇et (simulation-value-iso simulation₁ .from value₂₁)
--- is-simulation-inv (_·_ {term₂ = term₁₂} (simulation₁₁ · simulation₁₂) simulation₂) (ξ-·₁ reduction₂₁) with is-simulation-inv (simulation₁₁ · simulation₁₂) reduction₂₁
--- ... | term₁₁′ , simulation₁′ , reduction₁₁ = term₁₁′ · term₁₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₁₁
--- is-simulation-inv (_·_ {term₂ = term₁₂} (l̇et simulation₁₁ simulation₁₂) simulation₂) (ξ-·₁ reduction₂₁) with is-simulation-inv (l̇et simulation₁₁ simulation₁₂) reduction₂₁
--- ... | term₁₁′ , simulation₁′ , reduction₁₁ = term₁₁′ · term₁₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₁₁
--- is-simulation-inv ((λ̇_ {term = term₁₁} simulation₁) · simulation₂) (ξ-·₂ value-λ̇ reduction₂₂) with is-simulation-inv simulation₂ reduction₂₂
--- ... | term₁₂′ , simulation₂′ , redunction₁₂ = (λ̇ term₁₁) · term₁₂′ , (λ̇ simulation₁) · simulation₂′ , ξ-·₂ value-λ̇ redunction₁₂
--- is-simulation-inv (l̇et {term₂ = term₁₂} simulation₁ simulation₂) (ξ-·₂ value-λ̇ reduction₂₁) with is-simulation-inv simulation₁ reduction₂₁
--- ... | term₁₁′ , simulation₁′ , redunction₁₁ = l̇et term₁₁′ term₁₂ , l̇et simulation₁′ simulation₂ , ξ-l̇et redunction₁₁
+--     → term₁ ⟶ term₁′
+--     → Σ (Γ ⊢ A) (λ term₂′ → (term₁′ ~ term₂′) × (term₂ ⟶ term₂′))
+-- is-simulation {term₂ = (λ̇ term₂₁) · term₂₂} ((λ̇ simulation₁) · simulation₂) (β-λ̇ value₁₂) =
+--     term₂₁ [ term₂₂ ] , simulation-single-substitute simulation₁ simulation₂ , β-λ̇ (simulation-value-iso simulation₂ .to value₁₂)
+-- is-simulation {term₂ = (λ̇ term₂₂) · term₂₁} (l̇et simulation₁ simulation₂) (β-l̇et value₁₁) =
+--     term₂₂ [ term₂₁ ] , simulation-single-substitute simulation₂ simulation₁ , β-λ̇ (simulation-value-iso simulation₁ .to value₁₁)
+-- is-simulation (_·_ {term₂′ = term₂₂} (simulation₁₁ · simulation₁₂) simulation₂) (ξ-·₁ reduction₁₁) with is-simulation (simulation₁₁ · simulation₁₂) reduction₁₁
+-- ... | term₂₁′ , simulation₁′ , reduction₂₁ = term₂₁′ · term₂₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₂₁
+-- is-simulation (_·_ {term₂′ = term₂₂} (l̇et simulation₁₁ simulation₁₂) simulation₂) (ξ-·₁ reduction₁₁) with is-simulation (l̇et simulation₁₁ simulation₁₂) reduction₁₁
+-- ... | term₂₁′ , simulation₁′ , reduction₂₁ = term₂₁′ · term₂₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₂₁
+-- is-simulation ((λ̇_ {term′ = term₂₁} simulation₁) · simulation₂) (ξ-·₂ value-λ̇ reduction₁₂) with is-simulation simulation₂ reduction₁₂
+-- ... | term₂₂′ , simulation₂′ , redunction₂₂ = (λ̇ term₂₁) · term₂₂′ , (λ̇ simulation₁) · simulation₂′ , ξ-·₂ value-λ̇ redunction₂₂
+-- is-simulation (l̇et {term₂′ = term₂₂} simulation₁ simulation₂) (ξ-l̇et reduction₁₁) with is-simulation simulation₁ reduction₁₁
+-- ... | term₂₁′ , simulation₁′ , redunction₂₁ = (λ̇ term₂₂) · term₂₁′ , l̇et simulation₁′ simulation₂ , ξ-·₂ value-λ̇ redunction₂₁
 
+-- case split on reduction first, then simulation
 is-simulation-inv : {Γ : Context} → {A : Type}
     → {term₁ term₂ term₂′ : Γ ⊢ A}
     → term₁ ~ term₂
@@ -361,7 +341,7 @@ is-simulation-inv
     {term₁ = .((λ̇ term₁₁) · term₁₂)}
     {term₂ = .((λ̇ term₂₁) · term₂₂)}
     {term₂′ = .(term₂₁ [ term₂₂ ])}
-    (_·_ {term₁ = λ̇ term₁₁} {.(λ̇ term₂₁)} {term₁₂} {.term₂₂} (λ̇ simulation₁) simulation₂)
+    (_·_ {term₁ = .(λ̇ term₁₁)} {.(λ̇ term₂₁)} {term₁₂} {.term₂₂} (λ̇_ {term = term₁₁} {.term₂₁} simulation₁) simulation₂)
     (β-λ̇ {term₁ = term₂₁} {term₂₂} value₂₂) =
         term₁₁ [ term₁₂ ] , simulation-single-substitute simulation₁ simulation₂ , β-λ̇ (simulation-value-iso simulation₂ .from value₂₂)
 is-simulation-inv
@@ -403,5 +383,23 @@ is-simulation-inv
     (ξ-·₂ {term₁ = .(λ̇ term₂₂)} {term₂₁} {term₂₁′} (value-λ̇ {term = term₂₂}) reduction₂₁)
         with is-simulation-inv simulation₁ reduction₂₁
 ... | term₁₁′ , simulation₁′ , redunction₁₁ = l̇et term₁₁′ term₁₂ , l̇et simulation₁′ simulation₂ , ξ-l̇et redunction₁₁
+
+-- is-simulation-inv : {Γ : Context} → {A : Type}
+--     → {term₁ term₂ term₂′ : Γ ⊢ A}
+--     → term₁ ~ term₂
+--     → term₂ ⟶ term₂′
+--     → Σ (Γ ⊢ A) (λ term₁′ → (term₁′ ~ term₂′) × (term₁ ⟶ term₁′))
+-- is-simulation-inv {term₁ = (λ̇ term₁₁) · term₁₂} ((λ̇ simulation₁) · simulation₂) (β-λ̇ value₂₂) =
+--     term₁₁ [ term₁₂ ] , simulation-single-substitute simulation₁ simulation₂ , β-λ̇ (simulation-value-iso simulation₂ .from value₂₂)
+-- is-simulation-inv {term₁ = l̇et term₁₁ term₁₂} (l̇et simulation₁ simulation₂) (β-λ̇ value₂₁) =
+--     term₁₂ [ term₁₁ ] , simulation-single-substitute simulation₂ simulation₁ , β-l̇et (simulation-value-iso simulation₁ .from value₂₁)
+-- is-simulation-inv (_·_ {term₂ = term₁₂} (simulation₁₁ · simulation₁₂) simulation₂) (ξ-·₁ reduction₂₁) with is-simulation-inv (simulation₁₁ · simulation₁₂) reduction₂₁
+-- ... | term₁₁′ , simulation₁′ , reduction₁₁ = term₁₁′ · term₁₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₁₁
+-- is-simulation-inv (_·_ {term₂ = term₁₂} (l̇et simulation₁₁ simulation₁₂) simulation₂) (ξ-·₁ reduction₂₁) with is-simulation-inv (l̇et simulation₁₁ simulation₁₂) reduction₂₁
+-- ... | term₁₁′ , simulation₁′ , reduction₁₁ = term₁₁′ · term₁₂ , simulation₁′ · simulation₂ , ξ-·₁ reduction₁₁
+-- is-simulation-inv ((λ̇_ {term = term₁₁} simulation₁) · simulation₂) (ξ-·₂ value-λ̇ reduction₂₂) with is-simulation-inv simulation₂ reduction₂₂
+-- ... | term₁₂′ , simulation₂′ , redunction₁₂ = (λ̇ term₁₁) · term₁₂′ , (λ̇ simulation₁) · simulation₂′ , ξ-·₂ value-λ̇ redunction₁₂
+-- is-simulation-inv (l̇et {term₂ = term₁₂} simulation₁ simulation₂) (ξ-·₂ value-λ̇ reduction₂₁) with is-simulation-inv simulation₁ reduction₂₁
+-- ... | term₁₁′ , simulation₁′ , redunction₁₁ = l̇et term₁₁′ term₁₂ , l̇et simulation₁′ simulation₂ , ξ-l̇et redunction₁₁
 
 -- Exercise: show two formulations (ṗroj₁ and ṗroj₂ vs case×̇) are in bisimulation, see BisimulationProduct.agda
