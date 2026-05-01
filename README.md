@@ -4,6 +4,17 @@ Solution to the exercises from Programming Language Foundations with Agda: https
 
 Agda version: `2.8.0`
 
+## Building
+
+Type-check every solution file:
+
+```sh
+make          # or: make check
+make clean    # remove _build/
+```
+
+The `demo/` directory is excluded. Override the binary with `make AGDA=/path/to/agda`.
+
 ## Table of Contents
 
 ### Part 1
